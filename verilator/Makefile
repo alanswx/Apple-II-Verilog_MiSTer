@@ -50,9 +50,11 @@ V_SRC = \
         sim.v \
 		$(RTL)/super_serial_card.v  \
 		$(RTL)/t65/t65_alu.v  $(RTL)/t65/t65_mcode.v  $(RTL)/t65/t65_pack.v  $(RTL)/t65/t65.v \
+		$(RTL)/hdd.v \
 		$(RTL)/uart_6551.v \
 		$(RTL)/6551tx.v \
 		$(RTL)/6551rx.v \
+		$(RTL)/vga_controller.v  \
 		$(RTL)/keyboard.v 
 
 
