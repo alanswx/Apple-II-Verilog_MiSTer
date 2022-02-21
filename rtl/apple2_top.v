@@ -402,7 +402,7 @@ module apple2_top(
     assign DISK_ACT = D1_ACTIVE | D2_ACTIVE;
     assign DISK_RAM_DO = {8{1'b0}};
     
-   
+  /* 
     hdd hdd(
         .CLK_14M(CLK_14M),
         .IO_SELECT(IO_SELECT[7]),
@@ -422,7 +422,7 @@ module apple2_top(
         .ram_do(HDD_RAM_DO),
         .ram_we(HDD_RAM_WE)
     );
-    
+   */ 
    /* 
     mockingboard mb(
         .clk_14m(CLK_14M),

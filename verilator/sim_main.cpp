@@ -89,6 +89,9 @@ double sc_time_stamp() {	// Called by $time in Verilog.
 int clk_sys_freq = 24000000;
 SimClock clk_sys(1);
 
+int soft_reset=0;
+int soft_reset_time=0;
+
 // Audio
 // -----
 //#define DISABLE_AUDIO
@@ -106,6 +109,21 @@ void resetSim() {
 int verilate() {
 
 	if (!Verilated::gotFinish()) {
+		if (soft_reset){
+			fprintf(stderr,"soft_reset.. in gotFinish\n");
+			top->soft_reset = 1;
+			soft_reset=0;
+			soft_reset_time=0;
+			fprintf(stderr,"turning on %x\n",top->soft_reset);
+		}
+		if (clk_sys.IsRising()) {
+			soft_reset_time++;
+		}
+		if (soft_reset_time==initialReset) {
+			top->soft_reset = 0; 
+			fprintf(stderr,"turning off %x\n",top->soft_reset);
+			fprintf(stderr,"soft_reset_time %d initialReset %x\n",soft_reset_time,initialReset);
+		} 
 
 		// Assert reset during startup
 		if (main_time < initialReset) { top->reset = 1; }
@@ -274,8 +292,10 @@ int main(int argc, char** argv, char** env) {
 		if (ImGui::Button("Multi Step")) { run_enable = 0; multi_step = 1; }
 		//ImGui::SameLine();
 		ImGui::SliderInt("Multi step amount", &multi_step_amount, 8, 1024);
-if (ImGui::Button("Load Tape"))
+if (ImGui::Button("Load Tape")) 
     ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".tap", ".");
+ImGui::SameLine();
+		if (ImGui::Button("Soft Reset")) { fprintf(stderr,"soft reset\n"); soft_reset=1; } ImGui::SameLine();
 
 		ImGui::End();
 

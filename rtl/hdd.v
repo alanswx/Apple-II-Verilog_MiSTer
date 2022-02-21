@@ -54,7 +54,7 @@ module hdd(
     input            hdd_protect;
     input [8:0]      ram_addr;		// Address for sector buffer
     input [7:0]      ram_di;		// Data to sector buffer
-    output [7:0] ram_do;		// Data from sector buffer
+    output reg [7:0] ram_do;		// Data from sector buffer
     input            ram_we;		// Sector buffer write enable
     
     wire [7:0]       rom_dout;
@@ -77,8 +77,7 @@ module hdd(
     
     // Sector buffer
     // Double-ported RAM for holding a sector
-    //reg [7:0]        sector_buf[0:511];
-    wire [7:0] sec_out;
+    reg [7:0]        sector_buf[0:511];
     
     // ProDOS constants
     parameter        PRODOS_COMMAND_STATUS = 8'h00;
@@ -176,8 +175,7 @@ module hdd(
                                 D_OUT <= reg_block_h;
                             4'h8 :
                                 begin
-                                    //D_OUT <= sector_buf[sec_addr];
-	   			    D_OUT <= sec_out;
+                                    D_OUT <= sector_buf[sec_addr];
                                     increment_sec_addr <= 1'b1;
                                 end
                             default :
@@ -204,7 +202,7 @@ module hdd(
                                 reg_block_h <= D_IN;
                             4'h8 :
                                 begin
-                                    //sector_buf[sec_addr] <= D_IN;
+                                    sector_buf[sec_addr] <= D_IN;
                                     increment_sec_addr <= 1'b1;
                                 end
                             default :
@@ -233,21 +231,7 @@ module hdd(
     // cpu_interface
     
     // Dual-ported RAM holding the contents of the sector
-   bram #(8,9,"") sec_storage (
-	   .clock_a(CLK_14M),
-	   .wren_a(ram_we),
-	   .address_a(ram_addr),
-	   .data_a(ram_di),
-	   .q_a(ram_do),
-	   .clock_b(CLK_14M),
-	   .wren_b(A[3:0]==4'h8 && RD==0 && DEVICE_SELECT==1),
-	   .address_b(sec_addr),
-	   .data_b(D_IN),
-	   .q_b(sec_out),
-                              
-
-   );
-   /*
+    
     always @(posedge CLK_14M)
     begin: sec_storage
         
@@ -257,14 +241,7 @@ module hdd(
             ram_do <= sector_buf[ram_addr];
         end
     end
-   */ 
-   /* 
-    hdd_rom rom(
-        .addr(A[7:0]),
-        .clk(CLK_14M),
-        .dout(rom_dout)
-    );
-    */
+    
       rom #(8,8,"rtl/roms/hdd.hex") hddrom (
            .clock(CLK_14M),
            .ce(1'b1),
@@ -272,5 +249,5 @@ module hdd(
            .data_out(rom_dout)
    );
 
-    
+
 endmodule

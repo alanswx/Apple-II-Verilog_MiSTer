@@ -24,6 +24,7 @@ module emu (
 
 	input clk_sys,
 	input reset,
+	input soft_reset,
 	input menu,
 	
 	input [31:0] joystick_0,
@@ -122,6 +123,8 @@ wire [15:0] joys = joystick_a0;
 wire [15:0] joya = {joys[15:8], joys[7:0]};
 wire  [5:0] joyd = joystick_0[5:0] & {2'b11, {2{~|joys[7:0]}}, {2{~|joys[15:8]}}};
 
+assign AUDIO_L = {audio_l,6'b0};
+assign AUDIO_R = {audio_r,6'b0};
 wire [9:0] audio_l, audio_r;
 
 reg ce_pix;
@@ -140,6 +143,9 @@ wire	fd_read_disk;
 wire [13:0] fd_track_addr;
 wire [7:0] fd_data_in;
 wire [7:0] fd_data_do;
+always @(posedge clk_sys) begin
+	if (soft_reset) $display("soft_reset %x",soft_reset);
+end
 apple2_top apple2_top
 (
 	.CLK_14M(clk_sys),
@@ -148,7 +154,7 @@ apple2_top apple2_top
 	.cpu_type(1'b0), // 0 6502, 1 65C02
 
 	.reset_cold(reset),
-	.reset_warm(1'b0),
+	.reset_warm(soft_reset),
 
 	.hblank(VGA_HB),
 	.vblank(VGA_VB),
