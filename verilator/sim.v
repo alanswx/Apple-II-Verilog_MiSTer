@@ -89,13 +89,29 @@ module emu (
 	
 	input			ioctl_download,
 	input			ioctl_wr,
-	input [24:0]	ioctl_addr,
+	input [24:0]		ioctl_addr,
 	input [7:0]		ioctl_dout,
 	input [7:0]		ioctl_index,
-	output reg		ioctl_wait=1'b0
+	output reg		ioctl_wait=1'b0,
+
+	output [31:0] 		sd_lba[2],
+	output [1:0] 		sd_rd,
+	output [1:0] 		sd_wr,
+	input [1:0] 		sd_ack,
+	input [8:0] 		sd_buff_addr,
+	input [7:0] 		sd_buff_dout,
+	output [7:0] 		sd_buff_din[2],
+	input 			sd_buff_wr,
+	input [1:0] 		img_mounted,
+	input 			img_readonly,
+
+	input [63:0] 		img_size
+
+
+
 );
 wire joystick_a0 =  joystick_l_analog_0;
-
+/*
 wire [31:0] sd_lba[2];
 reg   [1:0] sd_rd;
 reg   [1:0] sd_wr;
@@ -108,7 +124,7 @@ wire  [1:0] img_mounted;
 wire        img_readonly;
 
 wire [63:0] img_size;
-
+*/
 wire UART_CTS;
 wire UART_RTS;
 wire UART_RXD;
@@ -144,7 +160,7 @@ wire [13:0] fd_track_addr;
 wire [7:0] fd_data_in;
 wire [7:0] fd_data_do;
 always @(posedge clk_sys) begin
-	if (soft_reset) $display("soft_reset %x",soft_reset);
+	//if (soft_reset) $display("soft_reset %x",soft_reset);
 end
 apple2_top apple2_top
 (
@@ -339,6 +355,7 @@ always @(posedge clk_sys) begin
 	end
 	else if(!state) begin
 		if((cur_track != track) || (fdd_mounted && ~img_mounted[0])) begin
+//$display("img_mounted %x size %x",img_mounted,img_size);
 			cur_track <= track;
 			fdd_mounted <= 0;
 			if(img_size) begin
@@ -395,8 +412,11 @@ end
 
 
 
-/*
- dpram #(14,8) floppy_dpram
+always @(posedge clk_sys) begin
+	if (sd_buff_wr & sd_ack[0]) $display(" track sec %x sd_buff_addr %x data %x lba %x",track_sec,sd_buff_addr,sd_buff_dout,sd_lba[0]);
+end
+
+bram #(14,8) floppy_dpram
 (
 	.clock_a(clk_sys),
 	.address_a({track_sec, sd_buff_addr}),
@@ -410,7 +430,7 @@ end
 	.data_b(fd_data_do),
 	.q_b(fd_data_in)
 );
-*/
+
 
 wire fd_busy;
 wire sd_busy;

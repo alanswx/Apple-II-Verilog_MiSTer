@@ -37,6 +37,8 @@ module apple2_top(
     g,
     b,
     SCREEN_MODE,
+    TEXT_COLOR,
+
     PS2_Key,
     joy,
     joy_an,
@@ -95,6 +97,7 @@ module apple2_top(
     output [7:0]  g;
     output [7:0]  b;
     input [1:0]   SCREEN_MODE;		// 00: Color, 01: B&W, 10:Green, 11: Amber
+    input         TEXT_COLOR;
     
     input [10:0]  PS2_Key;
     input [5:0]   joy;
@@ -193,7 +196,7 @@ module apple2_top(
     wire          cpu_we;
     wire          psg_irq_n;
     wire          psg_nmi_n;
-    wire          ssc_irq_n;
+    wire          ssc_irq_n = 1'b1;
     
     wire          we_ram;
     wire          VIDEO;
@@ -201,6 +204,8 @@ module apple2_top(
     wire          VBL;
     wire          COLOR_LINE;
     wire          COLOR_LINE_CONTROL;
+    wire          TEXT_MODE = 1'b0;
+
     wire [7:0]    GAMEPORT;
     
     wire [7:0]    K;
@@ -293,20 +298,18 @@ module apple2_top(
   end
  
     
-    assign COLOR_LINE_CONTROL = COLOR_LINE & (~(SCREEN_MODE[1] | SCREEN_MODE[0]));		// Color or B&W mode
-    
+    assign COLOR_LINE_CONTROL = (COLOR_LINE | (TEXT_COLOR & ~TEXT_MODE)) &  (~(SCREEN_MODE[1] | SCREEN_MODE[0])); // -- Color or B&W mode
+ 
     // Simulate power up on cold reset to go to the disk boot routine
-    assign ram_we = (reset_cold == 1'b0) ? we_ram : 
-                    1'b1;
-    assign ram_addr = (reset_cold == 1'b0) ? a_ram : 		// $3F4
-                      1012;
-    assign ram_di = (reset_cold == 1'b0) ? D : 
-                    8'b00000000;
-    
+    assign ram_we = (reset_cold == 1'b0) ? we_ram : 1'b1;
+    assign ram_addr = (reset_cold == 1'b0) ? a_ram : 18'h03F4;//1012; 		// $3F4
+    assign ram_di = (reset_cold == 1'b0) ? D : 8'b00000000;
+   
+
     assign PD = (IO_SELECT[4] == 1'b1 & mb_enabled == 1'b1) ? PSG_DO : 
                 (IO_SELECT[7] == 1'b1 | DEVICE_SELECT[7] == 1'b1) ? HDD_DO : 
     //DISK_DO when IO_SELECT(6) = '1' or DEVICE_SELECT(6) = '1' else 
-                (IO_SELECT[2] == 1'b1 | DEVICE_SELECT[2] == 1'b1 | SSC_ROM_EN == 1'b1) ? SSC_DO : 		// AJS turn on port
+//                (IO_SELECT[2] == 1'b1 | DEVICE_SELECT[2] == 1'b1 | SSC_ROM_EN == 1'b1) ? SSC_DO : 		// AJS turn on port
                 DISK_DO;
     
     
@@ -330,6 +333,7 @@ module apple2_top(
         .ram_we(we_ram),
         .VIDEO(VIDEO),
         .COLOR_LINE(COLOR_LINE),
+	//.TEXT_MODE(TEXT_MODE),
         .HBL(HBL),
         .VBL(VBL),
         .K(K),
@@ -340,7 +344,7 @@ module apple2_top(
         .PDL_STROBE(pdl_strobe),
         .IO_SELECT(IO_SELECT),
         .DEVICE_SELECT(DEVICE_SELECT),
-        .IO_STROBE(IO_STROBE),
+        //.IO_STROBE(IO_STROBE),
         .speaker(audio[7])
     );
     
@@ -363,7 +367,7 @@ module apple2_top(
     
     
     keyboard keyboard(
-        .PS2_Key(PS2_Key),
+        .PS2_Key(ps2_key),
         .CLK_14M(CLK_14M),
         .reset(reset),
         .reads(read_key),
@@ -390,26 +394,21 @@ module apple2_top(
         .ram_write_addr(DISK_RAM_ADDR),
         .ram_di(DISK_RAM_DI),
         // ram_do         => DISK_RAM_DO,
-        .ram_we(DISK_RAM_WE),
+        .ram_we(DISK_RAM_WE)
         
-        .DISK_FD_WRITE_DISK(DISK_FD_WRITE_DISK),
-        .DISK_FD_READ_DISK(DISK_FD_READ_DISK),
-        .DISK_FD_TRACK_ADDR(DISK_FD_TRACK_ADDR),
-        .DISK_FD_DATA_IN(DISK_FD_DATA_IN),
-        .DISK_FD_DATA_OUT(DISK_FD_DATA_OUT)
     );
     
     assign DISK_ACT = D1_ACTIVE | D2_ACTIVE;
     assign DISK_RAM_DO = {8{1'b0}};
     
-  /* 
+  
     hdd hdd(
         .CLK_14M(CLK_14M),
         .IO_SELECT(IO_SELECT[7]),
         .DEVICE_SELECT(DEVICE_SELECT[7]),
         .RESET(reset),
         .A(ADDR),
-        .RD((~cpu_we)),
+        .RD(~cpu_we),
         .D_IN(D),
         .D_OUT(HDD_DO),
         .sector(HDD_SECTOR),
@@ -422,27 +421,30 @@ module apple2_top(
         .ram_do(HDD_RAM_DO),
         .ram_we(HDD_RAM_WE)
     );
-   */ 
-   /* 
+   
+  /* 
     mockingboard mb(
         .clk_14m(CLK_14M),
         .phase_zero(PHASE_ZERO),
-        .i_reset_l((~reset)),
+        .i_reset_l(~reset),
         .i_ena_h(mb_enabled),
         
-        .i_addr(ADDR),
+        .i_addr(ADDR[7:0]),
         .i_data(D),
         .o_data(PSG_DO),
-        .i_rw_l((~cpu_we)),
-        .i_iosel_l((~IO_SELECT[4])),
+        .i_rw_l(~cpu_we),
+        .i_iosel_l(~IO_SELECT[4]),
         .o_irq_l(psg_irq_n),
         .o_nmi_l(psg_nmi_n),
         .o_audio_l(psg_audio_l),
         .o_audio_r(psg_audio_r)
     );
-    
-  */ 
+   */ 
+        assign psg_irq_n = 1'b1;
+  
+ /*
       superserial ssc(.CLK_50M(CLK_50M), .CLK_14M(CLK_14M), .CLK_2M(CLK_2M), .PH_2(PHASE_ZERO), .IO_SELECT_N((~IO_SELECT[2])), .DEVICE_SELECT_N((~DEVICE_SELECT[2])), .IO_STROBE_N((~IO_STROBE)), .ADDRESS(ADDR), .RW_N((~cpu_we)), .RESET(reset), .DATA_IN(D), .DATA_OUT(SSC_DO), .ROM_EN(SSC_ROM_EN), .UART_CTS(UART_CTS), .UART_RTS(UART_RTS), .UART_RXD(UART_RXD), .UART_TXD(UART_TXD), .UART_DTR(UART_DTR), .UART_DSR(UART_DSR), .IRQ_N(ssc_irq_n));
+      */
 /*
     superserial ssc(
         .clk_50m(CLK_50M),
@@ -467,8 +469,8 @@ module apple2_top(
         .irq_n(ssc_irq_n)
     );
  */   
-    assign audio[6:0] = {10{1'b0}};
-    assign audio[9:8] = {10{1'b0}};
+    assign audio[6:0] = 7'b0;
+    assign audio[9:8] = 2'b0;
     assign AUDIO_R = (psg_audio_r + audio);
     assign AUDIO_L = (psg_audio_l + audio);
     

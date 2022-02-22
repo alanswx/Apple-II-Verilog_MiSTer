@@ -307,7 +307,10 @@ module disk_ii(
     //      ram_do <= track_memory(to_integer(track_byte_addr(14 downto 1)));
     //    end if;
     //  end process;
-    
+    always @(posedge CLK_14M)
+    begin
+	    //if (read_disk) $display("TRACK (%x) read disk %x ram_do %x track addr %x",TRACK,read_disk,ram_do, track_byte_addr[14:1]);
+    end 
     assign DISK_FD_WRITE_DISK = 1'b0;
     assign DISK_FD_READ_DISK = read_disk;
     assign DISK_FD_TRACK_ADDR = track_byte_addr[14:1];
@@ -321,8 +324,8 @@ module disk_ii(
         reg [5:0]     byte_delay;		// Accounts for disk spin rate
         if (RESET == 1'b1)
         begin
-            track_byte_addr <= {15{1'b0}};
-            byte_delay = {6{1'b0}};
+            track_byte_addr <= 15'b0;
+            byte_delay = 6'b0;
         end
         else 
         begin
@@ -332,11 +335,11 @@ module disk_ii(
                 byte_delay = byte_delay - 1;
                 if ((read_disk == 1'b1 & PHASE_ZERO == 1'b1) | byte_delay == 0)
                 begin
-                    byte_delay = {6{1'b0}};
-                    if (track_byte_addr == 16'h33FE)
-                        track_byte_addr <= {15{1'b0}};
+                    byte_delay = 6'b0;
+                    if (track_byte_addr == 15'h33FE)
+                        track_byte_addr <= 15'b0;
                     else
-                        track_byte_addr <= track_byte_addr + 1;
+                        track_byte_addr <= track_byte_addr + 'd1;
                 end
             end
         end
@@ -357,8 +360,7 @@ module disk_ii(
     );
 */
 
-    assign read_disk = (DEVICE_SELECT == 1'b1 & A[3:0] == 4'hC) ? 1'b1 : 
-                       1'b0;		// C08C
+    assign read_disk = (DEVICE_SELECT == 1'b1 & A[3:0] == 4'hC) ? 1'b1 : 1'b0;		// C08C
     
     assign D_OUT = (IO_SELECT == 1'b1) ? rom_dout : 
                    (read_disk == 1'b1 & track_byte_addr[0] == 1'b0) ? DISK_FD_DATA_IN : 

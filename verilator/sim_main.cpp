@@ -14,6 +14,7 @@
 
 #include "sim_console.h"
 #include "sim_bus.h"
+#include "sim_blkdevice.h"
 #include "sim_video.h"
 #include "sim_audio.h"
 #include "sim_input.h"
@@ -49,6 +50,7 @@ MemoryEditor mem_edit;
 // HPS emulator
 // ------------
 SimBus bus(console);
+SimBlockDevice blockdevice(console);
 
 // Input handling
 // --------------
@@ -90,7 +92,7 @@ int clk_sys_freq = 24000000;
 SimClock clk_sys(1);
 
 int soft_reset=0;
-int soft_reset_time=0;
+vluint64_t soft_reset_time=0;
 
 // Audio
 // -----
@@ -140,10 +142,11 @@ int verilate() {
 		if (clk_sys.clk != clk_sys.old) {
 			if (clk_sys.clk) {
 				input.BeforeEval();
+				blockdevice.BeforeEval(main_time);
 				bus.BeforeEval();
 			}
 			top->eval();
-			if (clk_sys.clk) { bus.AfterEval(); }
+			if (clk_sys.clk) { bus.AfterEval(); blockdevice.AfterEval(); }
 		}
 
 #ifndef DISABLE_AUDIO
@@ -202,6 +205,22 @@ int main(int argc, char** argv, char** env) {
 	//bus.ioctl_din = &top->ioctl_din;
 	input.ps2_key = &top->ps2_key;
 
+	// hookup blk device
+	blockdevice.sd_lba[0] = &top->sd_lba[0];
+	blockdevice.sd_lba[1] = &top->sd_lba[1];
+	blockdevice.sd_rd = &top->sd_rd;
+	blockdevice.sd_wr = &top->sd_wr;
+	blockdevice.sd_ack = &top->sd_ack;
+	blockdevice.sd_buff_addr= &top->sd_buff_addr;
+	blockdevice.sd_buff_dout= &top->sd_buff_dout;
+	blockdevice.sd_buff_din[0]= &top->sd_buff_din[0];
+	blockdevice.sd_buff_din[1]= &top->sd_buff_din[1];
+	blockdevice.sd_buff_wr= &top->sd_buff_wr;
+	blockdevice.img_mounted= &top->img_mounted;
+	blockdevice.img_readonly= &top->img_readonly;
+	blockdevice.img_size= &top->img_size;
+
+
 #ifndef DISABLE_AUDIO
 	audio.Initialise();
 #endif
@@ -241,6 +260,7 @@ int main(int argc, char** argv, char** env) {
 	// Setup video output
 	if (video.Initialise(windowTitle) == 1) { return 1; }
 
+	blockdevice.MountDisk("floppy.nib",0);
 	//bus.QueueDownload("zombie.tap",1,0);
 
 #ifdef WIN32
