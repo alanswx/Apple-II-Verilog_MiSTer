@@ -152,6 +152,7 @@ module disk_ii(
             else
                 if (DEVICE_SELECT == 1'b1)
                 begin
+		$display("A[3] %x , A[2:1] %x ",A[3],A[2:1]);
                     if (A[3] == 1'b0)		// C080 - C087
                         motor_phase[(A[2:1])] <= A[0];
                     else
@@ -291,7 +292,7 @@ module disk_ii(
                 else
                     new_phase = new_phase + phase_change;
                 phase <= new_phase;
-		$display("phase %x (%d) new_phase %x (%d) phase_change %x (%d)",phase,phase,new_phase,new_phase,phase_change,phase_change);
+		//$display("phase %x (%d) new_phase %x (%d) phase_change %x (%d)",phase,phase,new_phase,new_phase,phase_change,phase_change);
             end
         end
     end
@@ -311,6 +312,8 @@ module disk_ii(
     always @(posedge CLK_14M)
     begin
 	    //if (read_disk) $display("TRACK (%x) read disk %x ram_do %x track addr %x",TRACK,read_disk,ram_do, track_byte_addr[14:1]);
+	    if (IO_SELECT) $display("disk_ii IO_SELECT");
+	    if (DEVICE_SELECT) $display("disk_ii DEVICE_SELECT");
     end 
     assign DISK_FD_WRITE_DISK = 1'b0;
     assign DISK_FD_READ_DISK = read_disk;
@@ -320,7 +323,7 @@ module disk_ii(
     
     // Go to the next byte when the disk is accessed or if the counter times out
     
-    always @(posedge CLK_14M or posedge RESET)
+    always @(posedge CLK_14M )
     begin: read_head
         reg [5:0]     byte_delay;		// Accounts for disk spin rate
         if (RESET == 1'b1)
@@ -364,7 +367,7 @@ module disk_ii(
     assign read_disk = (DEVICE_SELECT == 1'b1 & A[3:0] == 4'hC) ? 1'b1 : 1'b0;		// C08C
     
     assign D_OUT = (IO_SELECT == 1'b1) ? rom_dout : 
-                   (read_disk == 1'b1 & track_byte_addr[0] == 1'b0) ? DISK_FD_DATA_IN : 8'b0;
+                   (read_disk == 1'b1 & track_byte_addr[0] == 1'b0) ? DISK_FD_DATA_IN : 8'b00000000;
     
     assign track_addr = track_byte_addr[14:1];
     

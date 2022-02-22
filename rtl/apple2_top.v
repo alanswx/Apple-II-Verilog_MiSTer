@@ -194,7 +194,7 @@ module apple2_top(
     wire [7:0]    SSC_DO;
     wire          SSC_ROM_EN;
     wire          cpu_we;
-    wire          psg_irq_n;
+    wire          psg_irq_n = 1'b1;
     wire          psg_nmi_n;
     wire          ssc_irq_n = 1'b1;
     
@@ -308,7 +308,7 @@ module apple2_top(
 
     assign PD = (IO_SELECT[4] == 1'b1 & mb_enabled == 1'b1) ? PSG_DO : 
                 (IO_SELECT[7] == 1'b1 | DEVICE_SELECT[7] == 1'b1) ? HDD_DO : 
-    //DISK_DO when IO_SELECT(6) = '1' or DEVICE_SELECT(6) = '1' else 
+                (IO_SELECT[6] == 1'b1 | DEVICE_SELECT[6] == 1'b1) ? DISK_DO : 
 //                (IO_SELECT[2] == 1'b1 | DEVICE_SELECT[2] == 1'b1 | SSC_ROM_EN == 1'b1) ? SSC_DO : 		// AJS turn on port
                 DISK_DO;
     
@@ -395,6 +395,7 @@ module apple2_top(
         .ram_di(DISK_RAM_DI),
         // ram_do         => DISK_RAM_DO,
         .ram_we(DISK_RAM_WE),
+
 	.DISK_FD_WRITE_DISK(DISK_FD_WRITE_DISK),
 	.DISK_FD_READ_DISK(DISK_FD_READ_DISK),
 	.DISK_FD_TRACK_ADDR(DISK_FD_TRACK_ADDR),
@@ -407,7 +408,7 @@ module apple2_top(
     assign DISK_ACT = D1_ACTIVE | D2_ACTIVE;
     assign DISK_RAM_DO = {8{1'b0}};
     
-  
+/* 
     hdd hdd(
         .CLK_14M(CLK_14M),
         .IO_SELECT(IO_SELECT[7]),
@@ -427,7 +428,7 @@ module apple2_top(
         .ram_do(HDD_RAM_DO),
         .ram_we(HDD_RAM_WE)
     );
-   
+ */  
   /* 
     mockingboard mb(
         .clk_14m(CLK_14M),
@@ -446,7 +447,6 @@ module apple2_top(
         .o_audio_r(psg_audio_r)
     );
    */ 
-        assign psg_irq_n = 1'b1;
   
  /*
       superserial ssc(.CLK_50M(CLK_50M), .CLK_14M(CLK_14M), .CLK_2M(CLK_2M), .PH_2(PHASE_ZERO), .IO_SELECT_N((~IO_SELECT[2])), .DEVICE_SELECT_N((~DEVICE_SELECT[2])), .IO_STROBE_N((~IO_STROBE)), .ADDRESS(ADDR), .RW_N((~cpu_we)), .RESET(reset), .DATA_IN(D), .DATA_OUT(SSC_DO), .ROM_EN(SSC_ROM_EN), .UART_CTS(UART_CTS), .UART_RTS(UART_RTS), .UART_RXD(UART_RXD), .UART_TXD(UART_TXD), .UART_DTR(UART_DTR), .UART_DSR(UART_DSR), .IRQ_N(ssc_irq_n));
@@ -475,6 +475,17 @@ module apple2_top(
         .irq_n(ssc_irq_n)
     );
  */   
+
+/*
+   wire [7:0] floppy_data;
+    gfloppy floppy(
+	    .RESET_N(~reset),
+	    .PH_2(PHASE_ZERO),
+	    .ADDRESS(ADDR),
+	    .DATA_OUT(D),
+	    .FLOPPY_DATA(floppy_data)
+    );
+*/
     assign audio[6:0] = 7'b0;
     assign audio[9:8] = 2'b0;
     assign AUDIO_R = (psg_audio_r + audio);

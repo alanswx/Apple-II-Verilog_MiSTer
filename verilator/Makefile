@@ -58,6 +58,7 @@ V_SRC = \
 		$(RTL)/disk_ii.v  \
 		$(RTL)/apple2_top.v  \
 		$(RTL)/apple2.v  \
+		$(RTL)/gfloppy.v  \
 		$(RTL)/keyboard.v 
 
 

@@ -140,9 +140,9 @@ int verilate() {
 
 		// Simulate both edges of system clock
 		if (clk_sys.clk != clk_sys.old) {
+			if (clk_sys.IsRising()	) blockdevice.BeforeEval(main_time);
 			if (clk_sys.clk) {
 				input.BeforeEval();
-				blockdevice.BeforeEval(main_time);
 				bus.BeforeEval();
 			}
 			top->eval();
@@ -261,6 +261,7 @@ int main(int argc, char** argv, char** env) {
 	if (video.Initialise(windowTitle) == 1) { return 1; }
 
 	blockdevice.MountDisk("floppy.nib",0);
+	//blockdevice.MountDisk("hd.hdv",0);
 
 #ifdef WIN32
 	MSG msg;

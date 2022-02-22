@@ -180,6 +180,7 @@ apple2_top apple2_top
 	.g(VGA_G),
 	.b(VGA_B),
 	.SCREEN_MODE(2'b00),
+	.TEXT_COLOR(1'b0),
 
 	.AUDIO_L(audio_l),
 	.AUDIO_R(audio_r),
@@ -267,13 +268,13 @@ always @(posedge clk_sys) begin
 	end
 end
 
-
 reg  hdd_mounted = 0;
 wire hdd_read;
 wire hdd_write;
 reg  hdd_protect;
 reg  cpu_wait_hdd = 0;
 
+/*
 	reg state = 0;
 	reg old_ack = 0;
 	reg hdd_read_pending = 0;
@@ -318,7 +319,7 @@ always @(posedge clk_sys) begin
 		end
 	end
 end
-
+*/
 
 
 
@@ -339,6 +340,8 @@ reg       fd_write_pending = 0;
 	reg       wr_state=0;
 	reg [5:0] cur_track;
 	reg       fdd_mounted = 0;
+
+
 always @(posedge clk_sys) begin
 	reg       old_ack ;
 	reg       state ;
@@ -380,9 +383,9 @@ $display("img_mounted %x size %x track %x",img_mounted,img_size,track);
 	end
 	
 	// write one track .. 
-/*
+/*	
+
 	fd_write_pending <= fd_write_pending | fd_write;
-	
 	if (dd_reset) begin	
 		wr_state<=0;
 		fd_write_pending <= 0;
@@ -409,6 +412,7 @@ $display("img_mounted %x size %x track %x",img_mounted,img_size,track);
 		end
 	end
 */
+
 end
 
 

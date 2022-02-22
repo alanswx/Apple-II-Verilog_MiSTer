@@ -54,7 +54,7 @@ void SimBlockDevice::BeforeEval(int cycles)
 */
   // send data
   if (ack_delay==1) {
-  if (reading && (bytecnt<512)) {
+  if (reading && ((*sd_buff_wr)==0) &&  (bytecnt<512)) {
     *sd_buff_dout = disk[0].get();
     *sd_buff_addr = bytecnt++;
     *sd_buff_wr= 1;
