@@ -28,8 +28,10 @@ public:
 
 	int bytecnt;
 	bool reading;
+	bool writing;
 	int old_dsk_rd;
 	int old_lba;
+	int ack_delay;
 	
 	std::ifstream disk[2];
 

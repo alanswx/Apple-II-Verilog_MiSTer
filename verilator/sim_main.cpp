@@ -261,7 +261,6 @@ int main(int argc, char** argv, char** env) {
 	if (video.Initialise(windowTitle) == 1) { return 1; }
 
 	blockdevice.MountDisk("floppy.nib",0);
-	//bus.QueueDownload("zombie.tap",1,0);
 
 #ifdef WIN32
 	MSG msg;
@@ -312,9 +311,6 @@ int main(int argc, char** argv, char** env) {
 		if (ImGui::Button("Multi Step")) { run_enable = 0; multi_step = 1; }
 		//ImGui::SameLine();
 		ImGui::SliderInt("Multi step amount", &multi_step_amount, 8, 1024);
-if (ImGui::Button("Load Tape")) 
-    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".tap", ".");
-ImGui::SameLine();
 		if (ImGui::Button("Soft Reset")) { fprintf(stderr,"soft reset\n"); soft_reset=1; } ImGui::SameLine();
 
 		ImGui::End();

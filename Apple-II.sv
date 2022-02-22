@@ -605,7 +605,7 @@ end
 
 
 
-/*
+
  dpram #(14,8) floppy_dpram
 (
 	.clock_a(clk_sys),
@@ -620,7 +620,7 @@ end
 	.data_b(fd_data_do),
 	.q_b(fd_data_in)
 );
-*/
+
 
 wire fd_busy;
 wire sd_busy;
@@ -632,7 +632,7 @@ always @(posedge CLK_VIDEO) begin
 	if (~fd_busy & fd_read_disk)
 		ch1_rd <=1;
 end
-
+/*
 sdram sdram
 (
 	.*,
@@ -664,42 +664,8 @@ sdram sdram
 	.ch2_dout   (  ),
 	.ch2_busy   (  )
 );
-
-
-
-/*
-sdram sdram
-(
-	.*,
-
-	// system interface
-	.clk        ( CLK_VIDEO         ),
-	.init       ( !clock_locked   ),
-
-	// cpu/chipset interface
-	.ch0_addr   (ioctl_addr ),
-	.ch0_wr     (ioctl_wr & ioctl_download),
-	.ch0_din    (ioctl_dout),
-	.ch0_rd     (),
-	.ch0_dout   (),
-	.ch0_busy   (ioctl_wait),
-
-	.ch1_addr   ( fd_track_addr ),
-	.ch1_wr     ( fd_write_disk ),
-	.ch1_din    (  fd_data_do),
-	.ch1_rd     ( ch1_rd ),
-	.ch1_dout   ( fd_data_in ),
-	.ch1_busy   ( fd_busy ),
-
-	// reserved for backup ram save/load
-	.ch2_addr   ( ),
-	.ch2_wr     (  ),
-	.ch2_din    (  ),
-	.ch2_rd     (  ),
-	.ch2_dout   (  ),
-	.ch2_busy   (  )
-);
 */
+
 	
 
 wire tape_adc, tape_adc_act;

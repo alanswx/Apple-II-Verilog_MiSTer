@@ -24,7 +24,7 @@ set_global_assignment -name VHDL_FILE rtl/spram.vhd
 set_global_assignment -name VHDL_FILE rtl/dpram.vhd
 #set_global_assignment -name VHDL_FILE rtl/disk_ii.vhd
 set_global_assignment -name VERILOG_FILE rtl/disk_ii.v
-set_global_assignment -name VHDL_FILE rtl/disk_ii_rom.vhd
+#set_global_assignment -name VHDL_FILE rtl/disk_ii_rom.vhd
 #set_global_assignment -name VHDL_FILE rtl/keyboard.vhd
 set_global_assignment -name VERILOG_FILE rtl/keyboard.v
 set_global_assignment -name VERILOG_FILE rtl/timing_generator.v

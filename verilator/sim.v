@@ -110,7 +110,7 @@ module emu (
 
 
 );
-wire joystick_a0 =  joystick_l_analog_0;
+wire [15:0] joystick_a0 =  joystick_l_analog_0;
 /*
 wire [31:0] sd_lba[2];
 reg   [1:0] sd_rd;
@@ -359,6 +359,7 @@ always @(posedge clk_sys) begin
 			cur_track <= track;
 			fdd_mounted <= 0;
 			if(img_size) begin
+$display("img_mounted %x size %x track %x",img_mounted,img_size,track);
 				track_sec <= 0;
 				lba_fdd <= 13 * track;
 				state <= 1;
@@ -416,10 +417,10 @@ always @(posedge clk_sys) begin
 	if (sd_buff_wr & sd_ack[0]) $display(" track sec %x sd_buff_addr %x data %x lba %x",track_sec,sd_buff_addr,sd_buff_dout,sd_lba[0]);
 end
 
-bram #(14,8) floppy_dpram
+bram #(8,14) floppy_dpram
 (
 	.clock_a(clk_sys),
-	.address_a({track_sec, sd_buff_addr}),
+	.address_a({1'b0,track_sec, sd_buff_addr}),
 	.wren_a(sd_buff_wr & sd_ack[0]),
 	.data_a(sd_buff_dout),
 	.q_a(),

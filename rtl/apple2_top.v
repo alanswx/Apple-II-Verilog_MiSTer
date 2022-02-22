@@ -344,7 +344,7 @@ module apple2_top(
         .PDL_STROBE(pdl_strobe),
         .IO_SELECT(IO_SELECT),
         .DEVICE_SELECT(DEVICE_SELECT),
-        //.IO_STROBE(IO_STROBE),
+        .IO_STROBE(IO_STROBE),
         .speaker(audio[7])
     );
     
@@ -367,7 +367,7 @@ module apple2_top(
     
     
     keyboard keyboard(
-        .PS2_Key(ps2_key),
+        .PS2_Key(PS2_Key),
         .CLK_14M(CLK_14M),
         .reset(reset),
         .reads(read_key),
@@ -394,7 +394,13 @@ module apple2_top(
         .ram_write_addr(DISK_RAM_ADDR),
         .ram_di(DISK_RAM_DI),
         // ram_do         => DISK_RAM_DO,
-        .ram_we(DISK_RAM_WE)
+        .ram_we(DISK_RAM_WE),
+	.DISK_FD_WRITE_DISK(DISK_FD_WRITE_DISK),
+	.DISK_FD_READ_DISK(DISK_FD_READ_DISK),
+	.DISK_FD_TRACK_ADDR(DISK_FD_TRACK_ADDR),
+	.DISK_FD_DATA_IN(DISK_FD_DATA_IN),
+	.DISK_FD_DATA_OUT(DISK_FD_DATA_OUT)
+
         
     );
     

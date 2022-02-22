@@ -56,6 +56,8 @@ V_SRC = \
 		$(RTL)/6551rx.v \
 		$(RTL)/vga_controller.v  \
 		$(RTL)/disk_ii.v  \
+		$(RTL)/apple2_top.v  \
+		$(RTL)/apple2.v  \
 		$(RTL)/keyboard.v 
 
 

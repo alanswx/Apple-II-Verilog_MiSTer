@@ -143,7 +143,7 @@ module disk_ii(
         begin
             if (RESET == 1'b1)
             begin
-                motor_phase <= {4{1'b0}};
+                motor_phase <= 4'b0;
                 drive_on <= 1'b0;
                 drive2_select <= 1'b0;
                 q6 <= 1'b0;
@@ -291,6 +291,7 @@ module disk_ii(
                 else
                     new_phase = new_phase + phase_change;
                 phase <= new_phase;
+		$display("phase %x (%d) new_phase %x (%d) phase_change %x (%d)",phase,phase,new_phase,new_phase,phase_change,phase_change);
             end
         end
     end
@@ -363,8 +364,7 @@ module disk_ii(
     assign read_disk = (DEVICE_SELECT == 1'b1 & A[3:0] == 4'hC) ? 1'b1 : 1'b0;		// C08C
     
     assign D_OUT = (IO_SELECT == 1'b1) ? rom_dout : 
-                   (read_disk == 1'b1 & track_byte_addr[0] == 1'b0) ? DISK_FD_DATA_IN : 
-                   {8{1'b0}};
+                   (read_disk == 1'b1 & track_byte_addr[0] == 1'b0) ? DISK_FD_DATA_IN : 8'b0;
     
     assign track_addr = track_byte_addr[14:1];
     
