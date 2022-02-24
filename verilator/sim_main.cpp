@@ -261,8 +261,8 @@ int main(int argc, char** argv, char** env) {
 	if (video.Initialise(windowTitle) == 1) { return 1; }
 
         //bus.QueueDownload("floppy.nib",1,0);
-	blockdevice.MountDisk("floppy.nib",0);
-	//blockdevice.MountDisk("hd.hdv",0);
+	//blockdevice.MountDisk("floppy.nib",0);
+	blockdevice.MountDisk("hd.hdv",1);
 
 #ifdef WIN32
 	MSG msg;

@@ -276,7 +276,7 @@ wire hdd_write;
 reg  hdd_protect;
 reg  cpu_wait_hdd = 0;
 
-/*
+
 	reg state = 0;
 	reg old_ack = 0;
 	reg hdd_read_pending = 0;
@@ -321,7 +321,7 @@ always @(posedge clk_sys) begin
 		end
 	end
 end
-*/
+
 
 
 
@@ -360,7 +360,7 @@ always @(posedge clk_sys) begin
 	end
 	else if(!state) begin
 		if((cur_track != track) || (fdd_mounted && ~img_mounted[0])) begin
-//$display("img_mounted %x size %x",img_mounted,img_size);
+$display("img_mounted %x size %x fdd_mounted %x",img_mounted,img_size,fdd_mounted);
 			cur_track <= track;
 			fdd_mounted <= 0;
 			if(img_size) begin
@@ -418,11 +418,20 @@ $display("img_mounted %x size %x track %x",img_mounted,img_size,track);
 end
 
 
+reg [31:0] old_lba;
+always @(posedge clk_sys) begin
+old_lba<=sd_lba[1];
+if (old_lba!=sd_lba[1])
+begin
+  $display("lba changed %d %x",sd_lba[1],sd_lba[1]);
+end
+end
 
 always @(posedge clk_sys) begin
 	//if (sd_buff_wr & sd_ack[0]) $display(" track sec %x sd_buff_addr %x data %x lba %x",track_sec,sd_buff_addr,sd_buff_dout,sd_lba[0]);
 	//$display(" floppy_addr %x %x %x",floppyaddr,track,fd_track_addr);
 	//$display(" floppy_addr %x %x ",FLOPPY_ADDRESS,FLOPPY_DATA_IN);
+ //$display(" sd_rd %x %b %x %x",sd_rd,sd_rd,sd_rd[0],sd_rd[1]);
 end
 
 wire [17:0] floppyaddr = track * 13'd6656 + fd_track_addr;

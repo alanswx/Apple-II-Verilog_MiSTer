@@ -14,26 +14,26 @@
 struct SimBlockDevice {
 public:
 
-	IData* sd_lba[2];
+	IData* sd_lba[10];
 	CData* sd_rd;
 	CData* sd_wr;
 	CData* sd_ack;
 	SData* sd_buff_addr;
 	CData* sd_buff_dout;
-	CData* sd_buff_din[2];
+	CData* sd_buff_din[10];
 	CData* sd_buff_wr;
 	CData* img_mounted;
 	CData* img_readonly;
 	QData* img_size;
 
 	int bytecnt;
+        long int disk_size[10];
 	bool reading;
 	bool writing;
-	int old_dsk_rd;
-	int old_lba;
 	int ack_delay;
-	
-	std::ifstream disk[2];
+	int current_disk;
+	bool mountQueue[10];
+	std::ifstream disk[10];
 
 	void BeforeEval(int cycles);
 	void AfterEval(void);
