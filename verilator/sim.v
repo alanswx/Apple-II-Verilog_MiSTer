@@ -420,7 +420,7 @@ end
 
 
 always @(posedge clk_sys) begin
-	if (sd_buff_wr & sd_ack[0]) $display(" track sec %x sd_buff_addr %x data %x lba %x",track_sec,sd_buff_addr,sd_buff_dout,sd_lba[0]);
+	//if (sd_buff_wr & sd_ack[0]) $display(" track sec %x sd_buff_addr %x data %x lba %x",track_sec,sd_buff_addr,sd_buff_dout,sd_lba[0]);
 	//$display(" floppy_addr %x %x %x",floppyaddr,track,fd_track_addr);
 	//$display(" floppy_addr %x %x ",FLOPPY_ADDRESS,FLOPPY_DATA_IN);
 end
@@ -444,6 +444,7 @@ bram #(8,18) floppy_dpram
 	.q_b(FLOPPY_DATA_IN)
 );
 */
+/*
 bram #(8,18) floppy_dpram
 (
 	.clock_a(clk_sys),
@@ -454,12 +455,20 @@ bram #(8,18) floppy_dpram
 
 	.clock_b(clk_sys),
 	.address_b(floppyaddr),
-	.wren_b(1'b0/*fd_write_disk*/),
+	.wren_b(1'b0),// fd_write_disk
 	.data_b(fd_data_do),
-	.q_b(fd_data_in)
+	.q_b(fd_data_in_broken)
 );
+*/
+
 /*
-bram #(8,14) floppy_dpram
+always @(posedge clk_sys)
+	if (fd_read_disk && fd_data_in!=fd_data_in_broken) $display("data is broken track %x fd_track_addr %x  data %x != %x",track,fd_track_addr,fd_data_in,fd_data_in_broken);
+*/
+
+wire [7:0] fd_data_in_broken;
+
+bram #(8,14) floppy_dpram_onetrack
 (
 	.clock_a(clk_sys),
 	.address_a({1'b0,track_sec, sd_buff_addr}),
@@ -473,7 +482,7 @@ bram #(8,14) floppy_dpram
 	.data_b(fd_data_do),
 	.q_b(fd_data_in)
 );
-*/
+
 
 wire fd_busy;
 wire sd_busy;

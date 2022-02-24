@@ -140,7 +140,7 @@ int verilate() {
 
 		// Simulate both edges of system clock
 		if (clk_sys.clk != clk_sys.old) {
-			if (clk_sys.IsRising()	) blockdevice.BeforeEval(main_time);
+			if (clk_sys.IsRising() && *bus.ioctl_download!=1	) blockdevice.BeforeEval(main_time);
 			if (clk_sys.clk) {
 				input.BeforeEval();
 				bus.BeforeEval();
@@ -260,8 +260,8 @@ int main(int argc, char** argv, char** env) {
 	// Setup video output
 	if (video.Initialise(windowTitle) == 1) { return 1; }
 
-        bus.QueueDownload("floppy.nib",1,0);
-	//blockdevice.MountDisk("floppy.nib",0);
+        //bus.QueueDownload("floppy.nib",1,0);
+	blockdevice.MountDisk("floppy.nib",0);
 	//blockdevice.MountDisk("hd.hdv",0);
 
 #ifdef WIN32
