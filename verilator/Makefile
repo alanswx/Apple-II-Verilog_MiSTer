@@ -54,6 +54,7 @@ V_SRC = \
 		$(RTL)/uart_6551.v \
 		$(RTL)/6551tx.v \
 		$(RTL)/6551rx.v \
+		$(RTL)/R65C02.v \
 		$(RTL)/vga_controller.v  \
 		$(RTL)/disk_ii.v  \
 		$(RTL)/apple2_top.v  \

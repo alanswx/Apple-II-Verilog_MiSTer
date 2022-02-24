@@ -208,6 +208,8 @@ apple2_top apple2_top
 	.DISK_FD_DATA_IN(fd_data_in),
 	.DISK_FD_DATA_OUT(fd_data_do),
 
+    	.FLOPPY_ADDRESS(FLOPPY_ADDRESS),
+        .FLOPPY_DATA_IN(FLOPPY_DATA_IN),
 	
 	.HDD_SECTOR(sd_lba[1]),
 	.HDD_READ(hdd_read),
@@ -419,8 +421,44 @@ end
 
 always @(posedge clk_sys) begin
 	if (sd_buff_wr & sd_ack[0]) $display(" track sec %x sd_buff_addr %x data %x lba %x",track_sec,sd_buff_addr,sd_buff_dout,sd_lba[0]);
+	//$display(" floppy_addr %x %x %x",floppyaddr,track,fd_track_addr);
+	//$display(" floppy_addr %x %x ",FLOPPY_ADDRESS,FLOPPY_DATA_IN);
 end
 
+wire [17:0] floppyaddr = track * 13'd6656 + fd_track_addr;
+wire [17:0] FLOPPY_ADDRESS;
+wire [7:0]  FLOPPY_DATA_IN;
+/*
+bram #(8,18) floppy_dpram
+(
+	.clock_a(clk_sys),
+	.address_a(ioctl_addr),
+	.wren_a(ioctl_wr& ioctl_download),
+	.data_a(ioctl_dout),
+	.q_a(),
+
+	.clock_b(clk_sys),
+	.address_b(FLOPPY_ADDRESS),
+	.wren_b(1'b0),
+	.data_b(fd_data_do),
+	.q_b(FLOPPY_DATA_IN)
+);
+*/
+bram #(8,18) floppy_dpram
+(
+	.clock_a(clk_sys),
+	.address_a(ioctl_addr),
+	.wren_a(ioctl_wr& ioctl_download),
+	.data_a(ioctl_dout),
+	.q_a(),
+
+	.clock_b(clk_sys),
+	.address_b(floppyaddr),
+	.wren_b(1'b0/*fd_write_disk*/),
+	.data_b(fd_data_do),
+	.q_b(fd_data_in)
+);
+/*
 bram #(8,14) floppy_dpram
 (
 	.clock_a(clk_sys),
@@ -431,11 +469,11 @@ bram #(8,14) floppy_dpram
 	
 	.clock_b(clk_sys),
 	.address_b(fd_track_addr),
-	.wren_b(fd_write_disk),
+	.wren_b(1'b0), // fd_write_disk
 	.data_b(fd_data_do),
 	.q_b(fd_data_in)
 );
-
+*/
 
 wire fd_busy;
 wire sd_busy;

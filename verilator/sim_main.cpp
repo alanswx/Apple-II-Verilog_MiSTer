@@ -260,7 +260,8 @@ int main(int argc, char** argv, char** env) {
 	// Setup video output
 	if (video.Initialise(windowTitle) == 1) { return 1; }
 
-	blockdevice.MountDisk("floppy.nib",0);
+        bus.QueueDownload("floppy.nib",1,0);
+	//blockdevice.MountDisk("floppy.nib",0);
 	//blockdevice.MountDisk("hd.hdv",0);
 
 #ifdef WIN32

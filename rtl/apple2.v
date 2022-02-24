@@ -581,9 +581,9 @@ module apple2(
         .DO(T65_DO)
     );
     
-`ifdef VERILATOR
+//`ifdef VERILATOR
 	// we don't have a working version of this CHIP yet in verilog
-`else  
+//`else  
     R65C02 cpu65c02(
         .reset((~reset)),
         .clk(CLK_14M),
@@ -591,11 +591,11 @@ module apple2(
         .nmi_n(NMI_n),
         .irq_n(IRQ_n),
         .di(D_IN),
-        .do(R65C02_DO),
+        .dout(R65C02_DO),
         .addr(R65C02_A),
         .nwe(R65C02_WE_N)
     );
-`endif 
+//`endif 
     
     // Original Apple had asynchronous ROMs.  We use a synchronous ROM
     // that needs its address earlier, hence the odd clock.

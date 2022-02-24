@@ -55,6 +55,8 @@ module apple2_top(
     DISK_FD_TRACK_ADDR,
     DISK_FD_DATA_IN,
     DISK_FD_DATA_OUT,
+    FLOPPY_ADDRESS,
+    FLOPPY_DATA_IN,
     HDD_SECTOR,
     HDD_READ,
     HDD_WRITE,
@@ -120,6 +122,9 @@ module apple2_top(
     output [13:0] DISK_FD_TRACK_ADDR;
     input [7:0]   DISK_FD_DATA_IN;
     output [7:0]  DISK_FD_DATA_OUT;
+    
+    output [17:0] FLOPPY_ADDRESS;
+    input  [7:0]  FLOPPY_DATA_IN;
     
     // HDD control
     output [15:0] HDD_SECTOR;
@@ -405,6 +410,20 @@ module apple2_top(
         
     );
     
+   /*
+   wire [7:0] floppy_data;
+    gfloppy floppy(
+	    .RESET_N(~reset),
+	    .PH_2(PHASE_ZERO),
+	    .ADDRESS(ADDR),
+	    .DATA_OUT(D),
+	    .FLOPPY_DATA(DISK_DO),
+	    .FLOPPY_DATA_IN(FLOPPY_DATA_IN),
+	    .FLOPPY_ADDRESS(FLOPPY_ADDRESS)
+    );
+*/
+
+    
     assign DISK_ACT = D1_ACTIVE | D2_ACTIVE;
     assign DISK_RAM_DO = {8{1'b0}};
     
@@ -476,16 +495,7 @@ module apple2_top(
     );
  */   
 
-/*
-   wire [7:0] floppy_data;
-    gfloppy floppy(
-	    .RESET_N(~reset),
-	    .PH_2(PHASE_ZERO),
-	    .ADDRESS(ADDR),
-	    .DATA_OUT(D),
-	    .FLOPPY_DATA(floppy_data)
-    );
-*/
+
     assign audio[6:0] = 7'b0;
     assign audio[9:8] = 2'b0;
     assign AUDIO_R = (psg_audio_r + audio);

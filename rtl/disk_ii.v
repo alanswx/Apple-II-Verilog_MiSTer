@@ -152,7 +152,7 @@ module disk_ii(
             else
                 if (DEVICE_SELECT == 1'b1)
                 begin
-		$display("A[3] %x , A[2:1] %x ",A[3],A[2:1]);
+		//$display("A[3] %x , A[2:1] %x ",A[3],A[2:1]);
                     if (A[3] == 1'b0)		// C080 - C087
                         motor_phase[(A[2:1])] <= A[0];
                     else
@@ -312,8 +312,8 @@ module disk_ii(
     always @(posedge CLK_14M)
     begin
 	    //if (read_disk) $display("TRACK (%x) read disk %x ram_do %x track addr %x",TRACK,read_disk,ram_do, track_byte_addr[14:1]);
-	    if (IO_SELECT) $display("disk_ii IO_SELECT");
-	    if (DEVICE_SELECT) $display("disk_ii DEVICE_SELECT");
+	    //if (IO_SELECT) $display("disk_ii IO_SELECT");
+	    //if (DEVICE_SELECT) $display("disk_ii DEVICE_SELECT");
     end 
     assign DISK_FD_WRITE_DISK = 1'b0;
     assign DISK_FD_READ_DISK = read_disk;
