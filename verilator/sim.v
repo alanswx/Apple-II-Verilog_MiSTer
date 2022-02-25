@@ -95,14 +95,14 @@ module emu (
 	output reg		ioctl_wait=1'b0,
 
 	output [31:0] 		sd_lba[2],
-	output [1:0] 		sd_rd,
-	output [1:0] 		sd_wr,
-	input [1:0] 		sd_ack,
+	output [9:0] 		sd_rd,
+	output [9:0] 		sd_wr,
+	input [9:0] 		sd_ack,
 	input [8:0] 		sd_buff_addr,
 	input [7:0] 		sd_buff_dout,
 	output [7:0] 		sd_buff_din[2],
 	input 			sd_buff_wr,
-	input [1:0] 		img_mounted,
+	input [9:0] 		img_mounted,
 	input 			img_readonly,
 
 	input [63:0] 		img_size
@@ -113,14 +113,14 @@ module emu (
 wire [15:0] joystick_a0 =  joystick_l_analog_0;
 /*
 wire [31:0] sd_lba[2];
-reg   [1:0] sd_rd;
-reg   [1:0] sd_wr;
-wire  [1:0] sd_ack;
+reg   [9:0] sd_rd;
+reg   [9:0] sd_wr;
+wire  [9:0] sd_ack;
 wire  [8:0] sd_buff_addr;
 wire  [7:0] sd_buff_dout;
 wire  [7:0] sd_buff_din[2];
 wire        sd_buff_wr;
-wire  [1:0] img_mounted;
+wire  [9:0] img_mounted;
 wire        img_readonly;
 
 wire [63:0] img_size;
