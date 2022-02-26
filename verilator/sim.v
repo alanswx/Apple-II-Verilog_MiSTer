@@ -150,6 +150,10 @@ always @(posedge CLK_VIDEO) begin
 	div <= ~div;
 	ce_pix <=  &div ;
 end
+wire [15:0] hdd_sector;
+
+assign sd_lba[1] = {16'b0,hdd_sector};
+
 assign CE_PIXEL=ce_pix;
 wire led;
 wire hbl,vbl;
@@ -211,7 +215,7 @@ apple2_top apple2_top
     	.FLOPPY_ADDRESS(FLOPPY_ADDRESS),
         .FLOPPY_DATA_IN(FLOPPY_DATA_IN),
 	
-	.HDD_SECTOR(sd_lba[1]),
+	.HDD_SECTOR(hdd_sector /*sd_lba[1]*/),
 	.HDD_READ(hdd_read),
 	.HDD_WRITE(hdd_write),
 	.HDD_MOUNTED(hdd_mounted),
@@ -475,6 +479,8 @@ always @(posedge clk_sys)
 	if (fd_read_disk && fd_data_in!=fd_data_in_broken) $display("data is broken track %x fd_track_addr %x  data %x != %x",track,fd_track_addr,fd_data_in,fd_data_in_broken);
 */
 
+//always @(posedge clk_sys)
+	//$display("data is %x  %x",sd_buff_din[1],sd_buff_addr);
 wire [7:0] fd_data_in_broken;
 
 bram #(8,14) floppy_dpram_onetrack
