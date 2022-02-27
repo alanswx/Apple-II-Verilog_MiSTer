@@ -310,6 +310,83 @@ always @(posedge CLK) begin
 	C <= {MODE, ~((ymreg[7][2] | tone_gen_op[3]) & (ymreg[7][5] | noise_gen_op[2])) ? 5'd0 : ymreg[10][4] ? env_vol[4:0] : {ymreg[10][3:0], ymreg[10][3]}};
 end
 
+reg [7:0] volTable[64];
+initial 
+begin
+	//YM2149
+	volTable[0] = 8'h00; 
+	volTable[1] = 8'h01;
+	volTable[2] = 8'h01;
+	volTable[3] = 8'h02;
+	volTable[4] = 8'h02;
+	volTable[5] = 8'h03;
+	volTable[6] = 8'h03;
+	volTable[7] = 8'h04;
+
+	volTable[8] = 8'h06; 
+	volTable[9] = 8'h07;
+	volTable[10] = 8'h09;
+	volTable[11] = 8'h0a;
+	volTable[12] = 8'h0c;
+	volTable[13] = 8'h0e;
+	volTable[14] = 8'h11;
+	volTable[15] = 8'h13;
+
+	volTable[16] = 8'h17; 
+	volTable[17] = 8'h1b;
+	volTable[18] = 8'h20;
+	volTable[19] = 8'h25;
+	volTable[20] = 8'h2c;
+	volTable[21] = 8'h35;
+	volTable[22] = 8'h3e;
+	volTable[23] = 8'h47;
+
+	volTable[24] = 8'h54; 
+	volTable[25] = 8'h66;
+	volTable[26] = 8'h77;
+	volTable[27] = 8'h88;
+	volTable[28] = 8'ha1;
+	volTable[29] = 8'hc0;
+	volTable[30] = 8'he0;
+	volTable[31] = 8'hff;
+	//AY8910
+	volTable[32] = 8'h00; 
+	volTable[33] = 8'h00;
+	volTable[34] = 8'h03;
+	volTable[35] = 8'h03;
+	volTable[36] = 8'h04;
+	volTable[37] = 8'h04;
+	volTable[38] = 8'h06;
+	volTable[39] = 8'h06;
+
+	volTable[40] = 8'h0a; 
+	volTable[41] = 8'h0a;
+	volTable[42] = 8'h0f;
+	volTable[43] = 8'h0f;
+	volTable[44] = 8'h15;
+	volTable[45] = 8'h15;
+	volTable[46] = 8'h22;
+	volTable[47] = 8'h22;
+
+	volTable[48] = 8'h28; 
+	volTable[49] = 8'h28;
+	volTable[50] = 8'h41;
+	volTable[51] = 8'h41;
+	volTable[52] = 8'h5b;
+	volTable[53] = 8'h5b;
+	volTable[54] = 8'h72;
+	volTable[55] = 8'h72;
+
+	volTable[56] = 8'h90; 
+	volTable[57] = 8'h90;
+	volTable[58] = 8'hb5;
+	volTable[59] = 8'hb5;
+	volTable[60] = 8'hd7;
+	volTable[61] = 8'hd7;
+	volTable[62] = 8'hff;
+	volTable[63] = 8'hff;
+end
+/*
 wire [7:0] volTable[64] = '{
 	//YM2149
 	8'h00, 8'h01, 8'h01, 8'h02, 8'h02, 8'h03, 8'h03, 8'h04, 
@@ -323,6 +400,7 @@ wire [7:0] volTable[64] = '{
 	8'h28, 8'h28, 8'h41, 8'h41, 8'h5b, 8'h5b, 8'h72, 8'h72, 
 	8'h90, 8'h90, 8'hb5, 8'hb5, 8'hd7, 8'hd7, 8'hff, 8'hff 
 };
+*/
 
 assign CHANNEL_A = volTable[A];
 assign CHANNEL_B = volTable[B];

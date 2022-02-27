@@ -246,25 +246,26 @@ module apple2(
     assign rom_addr = A[13:0];
     
     
-    always @(A or C3ROM or C8ROM or CXROM)
+    //always @(A or C3ROM or C8ROM or CXROM)
+    always @(*)
     begin: address_decoder
-        ROM_SELECT <= 1'b0;
-        RAM_SELECT <= 1'b0;
-        KEYBOARD_SELECT <= 1'b0;
-        C01X_SELECT <= 1'b0;
-        TAPE_OUT <= 1'b0;
-        SPEAKER_SELECT <= 1'b0;
-        SOFTSWITCH_SELECT <= 1'b0;
-        GAMEPORT_SELECT <= 1'b0;
-        PDL_STROBE <= 1'b0;
-        STB <= 1'b0;
-        HRAM_CONTROL <= 1'b0;
-        ioselect <= {8{1'b0}};
-        devselect <= {8{1'b0}};
-        IO_STROBE <= 1'b0;
+        ROM_SELECT = 1'b0;
+        RAM_SELECT = 1'b0;
+        KEYBOARD_SELECT = 1'b0;
+        C01X_SELECT = 1'b0;
+        TAPE_OUT = 1'b0;
+        SPEAKER_SELECT = 1'b0;
+        SOFTSWITCH_SELECT = 1'b0;
+        GAMEPORT_SELECT = 1'b0;
+        PDL_STROBE = 1'b0;
+        STB = 1'b0;
+        HRAM_CONTROL = 1'b0;
+        ioselect = 8'b0;
+        devselect = 8'b0;
+        IO_STROBE = 1'b0;
         case (A[15:14])
             2'b00, 2'b01, 2'b10 :		// 0000 - BFFF
-                RAM_SELECT <= 1'b1;
+                RAM_SELECT = 1'b1;
             2'b11 :		// C000 - FFFF
                 case (A[13:12])
                     2'b00 :		// C000 - CFFF
@@ -272,48 +273,48 @@ module apple2(
                             4'h0 :		// C000 - C0FF
                                 case (A[7:4])
                                     4'h0 :		// C000 - C00F
-                                        KEYBOARD_SELECT <= 1'b1;
+                                        KEYBOARD_SELECT = 1'b1;
                                     4'h1 :		// C010 - C01F
-                                        C01X_SELECT <= 1'b1;
+                                        C01X_SELECT = 1'b1;
                                     4'h2 :		// C020 - C02F
-                                        TAPE_OUT <= 1'b1;
+                                        TAPE_OUT = 1'b1;
                                     4'h3 :		// C030 - C03F
-                                        SPEAKER_SELECT <= 1'b1;
+                                        SPEAKER_SELECT = 1'b1;
                                     4'h4 :		// C040 - C04F
-                                        STB <= 1'b1;
+                                        STB = 1'b1;
                                     4'h5 :		// C050 - C05F
-                                        SOFTSWITCH_SELECT <= 1'b1;
+                                        SOFTSWITCH_SELECT = 1'b1;
                                     4'h6 :		// C060 - C06F
-                                        GAMEPORT_SELECT <= 1'b1;
+                                        GAMEPORT_SELECT = 1'b1;
                                     4'h7 :		// C070 - C07F
-                                        PDL_STROBE <= 1'b1;
+                                        PDL_STROBE = 1'b1;
                                     4'h8 :		// C080 - C08F
-                                        HRAM_CONTROL <= 1'b1;
+                                        HRAM_CONTROL = 1'b1;
                                     4'h9, 4'hA, 4'hB, 4'hC, 4'hD, 4'hE, 4'hF :		// C090 - C0FF
-                                        devselect[(A[6:4])] <= 1'b1;
+                                        devselect[(A[6:4])] = 1'b1;
                                     default :
                                         ;
                                 endcase
                             4'h1, 4'h2, 4'h4, 4'h5, 4'h6, 4'h7 :		// C100 - C2FF, C400-C7FF
                                 if (CXROM == 1'b1)
-                                    ROM_SELECT <= 1'b1;
+                                    ROM_SELECT = 1'b1;
                                 else
-                                    ioselect[(A[10:8])] <= 1'b1;
+                                    ioselect[(A[10:8])] = 1'b1;
                             4'h3 :		// C300 - C3FF
                                 if (CXROM == 1'b1 | C3ROM == 1'b0)
-                                    ROM_SELECT <= 1'b1;
+                                    ROM_SELECT = 1'b1;
                                 else
-                                    ioselect[(A[10:8])] <= 1'b1;
+                                    ioselect[(A[10:8])] = 1'b1;
                             4'h8, 4'h9, 4'hA, 4'hB, 4'hC, 4'hD, 4'hE, 4'hF :		// C800 - CFFF
                                 if (CXROM == 1'b1 | C8ROM == 1'b1)
-                                    ROM_SELECT <= 1'b1;
+                                    ROM_SELECT = 1'b1;
                                 else
-                                    IO_STROBE <= 1'b1;
+                                    IO_STROBE = 1'b1;
                             default :
                                 ;
                         endcase
                     2'b01, 2'b10, 2'b11 :		// D000 - FFFF
-                        ROM_SELECT <= 1'b1;
+                        ROM_SELECT = 1'b1;
                     default :
                         ;
                 endcase
@@ -323,19 +324,20 @@ module apple2(
     end
     
     
-    always @(A or we or RAMRD or RAMWRT or STORE80 or HIRES_MODE or PAGE2 or ALTZP or ram_card_sel)
+    //always @(A or we or RAMRD or RAMWRT or STORE80 or HIRES_MODE or PAGE2 or ALTZP or ram_card_sel)
+    always @(*)
     begin: aux_ctrl
-        aux <= 1'b0;
+        aux = 1'b0;
         if (ram_card_sel == 1'b1)
-            aux <= 1'b0;
+            aux = 1'b0;
         else if (A[15:9] == 7'b0000000 | A[15:14] == 2'b11)		// Page 00,01,C0-FF
-            aux <= ALTZP;
+            aux = ALTZP;
         else if (A[15:10] == 6'b000001)		// Page 04-07
-            aux <= (STORE80 & PAGE2) | ((~STORE80) & ((RAMRD & (~we)) | (RAMWRT & we)));
+            aux = (STORE80 & PAGE2) | ((~STORE80) & ((RAMRD & (~we)) | (RAMWRT & we)));
         else if (A[15:13] == 3'b001)		// Page 20-3F
-            aux <= (STORE80 & PAGE2 & HIRES_MODE) | (((~STORE80) | (~HIRES_MODE)) & ((RAMRD & (~we)) | (RAMWRT & we)));
+            aux = (STORE80 & PAGE2 & HIRES_MODE) | (((~STORE80) | (~HIRES_MODE)) & ((RAMRD & (~we)) | (RAMWRT & we)));
         else
-            aux <= (RAMRD & (~we)) | (RAMWRT & we);
+            aux = (RAMRD & (~we)) | (RAMWRT & we);
     end
     
     
@@ -366,7 +368,7 @@ module apple2(
     assign DHIRES_MODE = AN[3];
     
     
-    always @(posedge CLK_14M or posedge reset)
+    always @(posedge CLK_14M )
     begin: hram_ctrl
         if (reset == 1'b1)
         begin
@@ -398,7 +400,7 @@ module apple2(
     assign HRAM_WRITE_EN = (~HRAM_WR_N) & A[15] & A[14] & (A[13] | A[12]);		// Dxxx-Fxxx
     
     
-    always @(posedge CLK_14M or posedge reset)
+    always @(posedge CLK_14M )
     begin: softswitches_IIe
         if (reset == 1'b1)
         begin
@@ -541,16 +543,11 @@ module apple2(
         .VIDEO(VIDEO)
     );
     
-    assign we = (cpu == 1'b0) ? (~T65_WE_N) : 
-                (~R65C02_WE_N);
-    assign A = (cpu == 1'b0) ? (T65_A[15:0]) : 
-               R65C02_A;
-    assign D_OUT = (cpu == 1'b0) ? T65_DO : 
-                   R65C02_DO;
-    assign T65_DI = (T65_WE_N == 1'b0) ? D_OUT : 
-                    D_IN;
-    assign CPU_EN = (PHASE_ZERO_D == 1'b1 & PHASE_ZERO == 1'b0) ? 1'b1 : 
-                    1'b0;
+    assign we = (cpu == 1'b0) ? (~T65_WE_N) : (~R65C02_WE_N);
+    assign A = (cpu == 1'b0) ? (T65_A[15:0]) : R65C02_A;
+    assign D_OUT = (cpu == 1'b0) ? T65_DO : R65C02_DO;
+    assign T65_DI = (T65_WE_N == 1'b0) ? D_OUT : D_IN;
+    assign CPU_EN = (PHASE_ZERO_D == 1'b1 & PHASE_ZERO == 1'b0) ? 1'b1 : 1'b0;
     
     
     always @(posedge CLK_14M)
@@ -561,13 +558,19 @@ module apple2(
             CPU_EN_POST <= CPU_EN;
         end
     end
+   
     
+    //always @(posedge CLK_14M)
+	    //if (DEVICE_SELECT[7]) $display("T64_DO: %x",T65_DO);
+	    //if (CPU_EN & CPU_WAIT) $display("CPU HALTED");
+	  // $display("CPU_EN: %x",CPU_EN);
+  
     
     T65 cpu6502(
         .Mode(2'b00),
         .Clk(CLK_14M),
-        .Enable(CPU_EN & ((~CPU_WAIT))),
-        .Res_n((~reset)),
+        .Enable(CPU_EN & ~CPU_WAIT),
+        .Res_n(~reset),
         
         .Rdy(1'b1),
         .Abort_n(1'b1),
@@ -587,7 +590,7 @@ module apple2(
     R65C02 cpu65c02(
         .reset((~reset)),
         .clk(CLK_14M),
-        .enable(CPU_EN & ((~CPU_WAIT))),
+        .enable(CPU_EN & ~CPU_WAIT),
         .nmi_n(NMI_n),
         .irq_n(IRQ_n),
         .di(D_IN),

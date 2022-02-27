@@ -22,7 +22,7 @@ entity R65C02 is
 		nmi_n : in std_logic;
 		irq_n : in std_logic;
 		di : in unsigned(7 downto 0);
-		do : out unsigned(7 downto 0);
+		dout : out unsigned(7 downto 0);
 		addr : out unsigned(15 downto 0);
 		nwe : out std_logic;
 		sync : out std_logic;
@@ -1314,7 +1314,7 @@ calcDo: process(clk)
 			end if;			
 		end if;
 	end process;
-	do <= doReg;
+	dout <= doReg;
 	
 
 

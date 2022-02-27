@@ -22,6 +22,7 @@
 
 module hdd(
     CLK_14M,
+    PHASE_ZERO,
     IO_SELECT,
     DEVICE_SELECT,
     RESET,
@@ -40,6 +41,7 @@ module hdd(
     ram_we
 );
     input            CLK_14M;
+    input            PHASE_ZERO;
     input            IO_SELECT;		// e.g., C600 - C6FF ROM
     input            DEVICE_SELECT;		// e.g., C0E0 - C0EF I/O locations
     input            RESET;
@@ -95,6 +97,7 @@ module hdd(
         
         begin
             D_OUT <= 8'hFF;
+	if (PHASE_ZERO ) begin
             hdd_read <= 1'b0;
             hdd_write <= 1'b0;
             if (RESET == 1'b1)
@@ -112,6 +115,7 @@ module hdd(
                 select_d <= DEVICE_SELECT;
                 if (DEVICE_SELECT == 1'b1)
                 begin
+	//if (D_IN!=0) $display("inside loop, D_IN %x A[3:0] %x RD %x ",D_IN,A[3:0],RD);
                     if (RD == 1'b1)
                         case (A[3:0])
                             4'h0 :
@@ -132,6 +136,7 @@ module hdd(
                                         PRODOS_COMMAND_READ :
                                             if (hdd_mounted == 1'b1 & reg_unit == 8'h70)
                                             begin
+	//$display("HDD PRODOS COMMAND READ");
                                                 hdd_read <= 1'b1;
                                                 reg_status <= 8'h00;
                                                 D_OUT <= 8'h00;
@@ -151,6 +156,7 @@ module hdd(
                                                 D_OUT <= PRODOS_STATUS_PROTECT;
                                             else
                                             begin
+	//$display("HDD PRODOS COMMAND WRITE");
                                                 D_OUT <= 8'h00;
                                                 reg_status <= 8'h00;
                                                 hdd_write <= 1'b1;
@@ -176,6 +182,7 @@ module hdd(
                             4'h8 :
                                 begin
                                     D_OUT <= sector_buf[sec_addr];
+				    //$display("reading D_OUT %x to ram %x readonly %x",D_OUT,sec_addr,hdd_protect);
                                     increment_sec_addr <= 1'b1;
                                 end
                             default :
@@ -202,6 +209,7 @@ module hdd(
                                 reg_block_h <= D_IN;
                             4'h8 :
                                 begin
+				    //$display("writing D_IN %x to ram %x readonly %x",D_IN,sec_addr,hdd_protect);
                                     sector_buf[sec_addr] <= D_IN;
                                     increment_sec_addr <= 1'b1;
                                 end
@@ -225,6 +233,7 @@ module hdd(
                 end
             end
         end
+end
     end
     // DEVICE_SELECT/IO_SELECT
     // RESET

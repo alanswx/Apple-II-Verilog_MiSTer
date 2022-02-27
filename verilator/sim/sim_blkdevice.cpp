@@ -69,10 +69,10 @@ void SimBlockDevice::BeforeEval(int cycles)
          *sd_buff_dout = disk[i].get();
          *sd_buff_addr = bytecnt++;
          *sd_buff_wr= 1;
-         //printf("cycles %x reading %X : %X \n",cycles,*sd_buff_addr,*sd_buff_dout );
+         printf("cycles %x reading %X : %X ack %x\n",cycles,*sd_buff_addr,*sd_buff_dout,*sd_ack );
       } else if(writing && *sd_buff_addr != bytecnt && (bytecnt < kBLKSZ)) {
       //} else if(writing && (bytecnt < kBLKSZ)) {
-  	printf("writing disk %i at sd_buff_addr %x data %x\n",i,*sd_buff_addr,*sd_buff_din[i]);
+  	printf("writing disk %i at sd_buff_addr %x data %x ack %x\n",i,*sd_buff_addr,*sd_buff_din[i],*sd_ack);
         disk[i].put(*(sd_buff_din[i]));
         *sd_buff_addr = bytecnt;
       } else {
@@ -123,17 +123,20 @@ void SimBlockDevice::BeforeEval(int cycles)
 
         disk[i].clear();
         disk[i].seekg((lba) * kBLKSZ);
-        printf("seek %06X lba: (%x) (%d,%d) drive %d reading %d writing %d\n", (lba) * kBLKSZ,lba,lba,kBLKSZ,i,reading,writing);
+        printf("seek %06X lba: (%x) (%d,%d) drive %d reading %d writing %d ack %x\n", (lba) * kBLKSZ,lba,lba,kBLKSZ,i,reading,writing,*sd_ack);
         bytecnt = 0;
         ack_delay = 1200;
       }
     }
 
     if (current_disk == i) {
-      if (ack_delay==1) 
-      bitset(*sd_ack,i);
-        else
-      bitclear(*sd_ack,i);
+      if (ack_delay==1) {
+           bitset(*sd_ack,i);
+	   //printf("setting sd_ack: %x\n",*sd_ack);
+      } else {
+           bitclear(*sd_ack,i);
+	   //printf("clearing sd_ack: %x\n",*sd_ack);
+      }
       if((ack_delay > 1) || ((ack_delay == 1) && !reading && !writing))
         ack_delay--;
     }

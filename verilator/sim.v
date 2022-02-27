@@ -111,20 +111,7 @@ module emu (
 
 );
 wire [15:0] joystick_a0 =  joystick_l_analog_0;
-/*
-wire [31:0] sd_lba[2];
-reg   [9:0] sd_rd;
-reg   [9:0] sd_wr;
-wire  [9:0] sd_ack;
-wire  [8:0] sd_buff_addr;
-wire  [7:0] sd_buff_dout;
-wire  [7:0] sd_buff_din[2];
-wire        sd_buff_wr;
-wire  [9:0] img_mounted;
-wire        img_readonly;
 
-wire [63:0] img_size;
-*/
 wire UART_CTS;
 wire UART_RTS;
 wire UART_RXD;
@@ -195,7 +182,7 @@ apple2_top apple2_top
 	.joy(joyd),
 	.joy_an(joya),
 
-	.mb_enabled(1'b0),
+	.mb_enabled(1'b1),
 
 	.TRACK(track),
 	.DISK_RAM_ADDR({track_sec, sd_buff_addr}),
@@ -281,11 +268,11 @@ reg  hdd_protect;
 reg  cpu_wait_hdd = 0;
 
 
-	reg state = 0;
-	reg old_ack = 0;
-	reg hdd_read_pending = 0;
-	reg hdd_write_pending = 0;
 always @(posedge clk_sys) begin
+	reg old_ack ;
+	reg hdd_read_pending ;
+	reg hdd_write_pending ;
+	reg state;
 
 	old_ack <= sd_ack[1];
 	hdd_read_pending <= hdd_read_pending | hdd_read;
@@ -318,8 +305,10 @@ always @(posedge clk_sys) begin
 			hdd_write_pending <= 0;
 			sd_rd[1] <= 0;
 			sd_wr[1] <= 0;
+			$display("~old ack %x sd_ack[1] %x",~old_ack,sd_ack[1]);
 		end
 		else if(old_ack & ~sd_ack[1]) begin
+			$display("old ack %x ~sd_ack[1] %x",old_ack,~sd_ack[1]);
 			state <= 0;
 			cpu_wait_hdd <= 0;
 		end
@@ -343,12 +332,12 @@ reg         cpu_wait_fdd = 0;
 reg  [31:0] lba_fdd;
 reg       fd_write_pending = 0;
 
-	reg       wr_state=0;
-	reg [5:0] cur_track;
-	reg       fdd_mounted = 0;
 
 
 always @(posedge clk_sys) begin
+	reg       wr_state;
+	reg [5:0] cur_track;
+	reg       fdd_mounted ;
 	reg       old_ack ;
 	reg       state ;
 	

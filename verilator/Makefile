@@ -56,6 +56,9 @@ V_SRC = \
 		$(RTL)/6551rx.v \
 		$(RTL)/R65C02.v \
 		$(RTL)/vga_controller.v  \
+		$(RTL)/mockingboard/mockingboard.v  \
+		$(RTL)/mockingboard/via6522.v  \
+		$(RTL)/mockingboard/YM2149.sv  \
 		$(RTL)/disk_ii.v  \
 		$(RTL)/apple2_top.v  \
 		$(RTL)/apple2.v  \

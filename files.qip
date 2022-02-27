@@ -6,8 +6,10 @@ set_global_assignment -name VERILOG_FILE rtl/rom.v
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/bram.sv
 set_global_assignment -name VHDL_FILE rtl/R65Cx2.vhd
 #set_global_assignment -name VERILOG_FILE rtl/r65c02.v
-set_global_assignment -name VHDL_FILE rtl/mockingboard/mockingboard.vhd
-set_global_assignment -name VHDL_FILE rtl/mockingboard/via6522.vhd
+#set_global_assignment -name VHDL_FILE rtl/mockingboard/mockingboard.vhd
+#set_global_assignment -name VHDL_FILE rtl/mockingboard/via6522.vhd
+set_global_assignment -name VERILOG_FILE rtl/mockingboard/mockingboard.v
+set_global_assignment -name VERILOG_FILE rtl/mockingboard/via6522.v
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/mockingboard/YM2149.sv
 #set_global_assignment -name VHDL_FILE rtl/hdd_rom.vhd
 #set_global_assignment -name VHDL_FILE rtl/hdd.vhd

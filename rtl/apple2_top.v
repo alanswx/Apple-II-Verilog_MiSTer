@@ -199,7 +199,7 @@ module apple2_top(
     wire [7:0]    SSC_DO;
     wire          SSC_ROM_EN;
     wire          cpu_we;
-    wire          psg_irq_n = 1'b1;
+    wire          psg_irq_n ;
     wire          psg_nmi_n;
     wire          ssc_irq_n = 1'b1;
     
@@ -233,7 +233,8 @@ module apple2_top(
     reg           joyx;
     reg           joyy;
     wire          pdl_strobe;
-    
+   
+    wire          STB; 
     // In the Apple ][, this was a 555 timer
     
     always @(posedge CLK_14M)
@@ -347,6 +348,7 @@ module apple2_top(
         .AN(),
         .GAMEPORT(GAMEPORT),
         .PDL_STROBE(pdl_strobe),
+	.STB(STB),
         .IO_SELECT(IO_SELECT),
         .DEVICE_SELECT(DEVICE_SELECT),
         .IO_STROBE(IO_STROBE),
@@ -430,6 +432,7 @@ module apple2_top(
 
     hdd hdd(
         .CLK_14M(CLK_14M),
+        .PHASE_ZERO(PHASE_ZERO),
         .IO_SELECT(IO_SELECT[7]),
         .DEVICE_SELECT(DEVICE_SELECT[7]),
         .RESET(reset),
@@ -448,24 +451,24 @@ module apple2_top(
         .ram_we(HDD_RAM_WE)
     );
    
-  /* 
-    mockingboard mb(
-        .clk_14m(CLK_14M),
-        .phase_zero(PHASE_ZERO),
-        .i_reset_l(~reset),
-        .i_ena_h(mb_enabled),
+ 
+    MOCKINGBOARD mb(
+        .CLK_14M(CLK_14M),
+        .PHASE_ZERO(PHASE_ZERO),
+        .I_RESET_L(~reset),
+        .I_ENA_H(mb_enabled),
         
-        .i_addr(ADDR[7:0]),
-        .i_data(D),
-        .o_data(PSG_DO),
-        .i_rw_l(~cpu_we),
-        .i_iosel_l(~IO_SELECT[4]),
-        .o_irq_l(psg_irq_n),
-        .o_nmi_l(psg_nmi_n),
-        .o_audio_l(psg_audio_l),
-        .o_audio_r(psg_audio_r)
+        .I_ADDR(ADDR[7:0]),
+        .I_DATA(D),
+        .O_DATA(PSG_DO),
+        .I_RW_L(~cpu_we),
+        .I_IOSEL_L(~IO_SELECT[4]),
+        .O_IRQ_L(psg_irq_n),
+        .O_NMI_L(psg_nmi_n),
+        .O_AUDIO_L(psg_audio_l),
+        .O_AUDIO_R(psg_audio_r)
     );
-   */ 
+   
   
  /*
       superserial ssc(.CLK_50M(CLK_50M), .CLK_14M(CLK_14M), .CLK_2M(CLK_2M), .PH_2(PHASE_ZERO), .IO_SELECT_N((~IO_SELECT[2])), .DEVICE_SELECT_N((~DEVICE_SELECT[2])), .IO_STROBE_N((~IO_STROBE)), .ADDRESS(ADDR), .RW_N((~cpu_we)), .RESET(reset), .DATA_IN(D), .DATA_OUT(SSC_DO), .ROM_EN(SSC_ROM_EN), .UART_CTS(UART_CTS), .UART_RTS(UART_RTS), .UART_RXD(UART_RXD), .UART_TXD(UART_TXD), .UART_DTR(UART_DTR), .UART_DSR(UART_DSR), .IRQ_N(ssc_irq_n));
