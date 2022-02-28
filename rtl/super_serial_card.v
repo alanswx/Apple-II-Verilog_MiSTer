@@ -157,7 +157,7 @@ begin
 end
 */
 
-wire [10:0] ROM_ADDR = ROM_EN ? ADDRESS[10:0] : (ADDRESS[7:0]+'h700);
+wire [10:0] ROM_ADDR = ROM_EN ? ADDRESS[10:0] : { 3'b111 ,ADDRESS[7:0]} ;
 assign DATA_OUT = ~IO_SELECT_N ? DOA_C8S : (ROM_EN & ~IO_STROBE_N) ? DOA_C8S : SSC;
 //assign DATA_OUT = ~DEVICE_SELECT_N? SSC : ~IO_SELECT_N ? DOA_C8S : (ROM_EN & ~IO_STROBE_N) ? DOA_C8S : DOA_C8S;
 
