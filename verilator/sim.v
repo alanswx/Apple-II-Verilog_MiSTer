@@ -332,12 +332,12 @@ reg         cpu_wait_fdd = 0;
 reg  [31:0] lba_fdd;
 reg       fd_write_pending = 0;
 
+	reg       fdd_mounted ;
 
 
 always @(posedge clk_sys) begin
 	reg       wr_state;
 	reg [5:0] cur_track;
-	reg       fdd_mounted ;
 	reg       old_ack ;
 	reg       state ;
 	
@@ -353,7 +353,7 @@ always @(posedge clk_sys) begin
 	end
 	else if(!state) begin
 		if((cur_track != track) || (fdd_mounted && ~img_mounted[0])) begin
-$display("img_mounted %x size %x fdd_mounted %x",img_mounted,img_size,fdd_mounted);
+$display("img_mounted %x size %x fdd_mounted %x track %x",img_mounted,img_size,fdd_mounted, track);
 			cur_track <= track;
 			fdd_mounted <= 0;
 			if(img_size) begin

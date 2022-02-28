@@ -306,10 +306,13 @@ module apple2(
                                 else
                                     ioselect[(A[10:8])] = 1'b1;
                             4'h8, 4'h9, 4'hA, 4'hB, 4'hC, 4'hD, 4'hE, 4'hF :		// C800 - CFFF
+begin
+//$display("inside C800-CFFF");
                                 if (CXROM == 1'b1 | C8ROM == 1'b1)
                                     ROM_SELECT = 1'b1;
                                 else
                                     IO_STROBE = 1'b1;
+end
                             default :
                                 ;
                         endcase

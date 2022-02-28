@@ -201,7 +201,7 @@ module apple2_top(
     wire          cpu_we;
     wire          psg_irq_n ;
     wire          psg_nmi_n;
-    wire          ssc_irq_n = 1'b1;
+    wire          ssc_irq_n;
     
     wire          we_ram;
     wire          VIDEO;
@@ -315,7 +315,7 @@ module apple2_top(
     assign PD = (IO_SELECT[4] == 1'b1 & mb_enabled == 1'b1) ? PSG_DO : 
                 (IO_SELECT[7] == 1'b1 | DEVICE_SELECT[7] == 1'b1) ? HDD_DO : 
                 (IO_SELECT[6] == 1'b1 | DEVICE_SELECT[6] == 1'b1) ? DISK_DO : 
-//                (IO_SELECT[2] == 1'b1 | DEVICE_SELECT[2] == 1'b1 | SSC_ROM_EN == 1'b1) ? SSC_DO : 		// AJS turn on port
+                (IO_SELECT[2] == 1'b1 | DEVICE_SELECT[2] == 1'b1 | SSC_ROM_EN == 1'b1) ? SSC_DO : 		// AJS turn on port
                 DISK_DO;
     
     
@@ -470,33 +470,30 @@ module apple2_top(
     );
    
   
- /*
-      superserial ssc(.CLK_50M(CLK_50M), .CLK_14M(CLK_14M), .CLK_2M(CLK_2M), .PH_2(PHASE_ZERO), .IO_SELECT_N((~IO_SELECT[2])), .DEVICE_SELECT_N((~DEVICE_SELECT[2])), .IO_STROBE_N((~IO_STROBE)), .ADDRESS(ADDR), .RW_N((~cpu_we)), .RESET(reset), .DATA_IN(D), .DATA_OUT(SSC_DO), .ROM_EN(SSC_ROM_EN), .UART_CTS(UART_CTS), .UART_RTS(UART_RTS), .UART_RXD(UART_RXD), .UART_TXD(UART_TXD), .UART_DTR(UART_DTR), .UART_DSR(UART_DSR), .IRQ_N(ssc_irq_n));
-      */
-/*
-    superserial ssc(
-        .clk_50m(CLK_50M),
-        .clk_14m(CLK_14M),
-        .clk_2m(CLK_2M),
-        .ph_2(PHASE_ZERO),
-        .io_select_n((~IO_SELECT[2])),
-        .device_select_n((~DEVICE_SELECT[2])),
-        .io_strobe_n((~IO_STROBE)),
-        .address(ADDR),
-        .rw_n((~cpu_we)),
-        .reset(reset),
-        .data_in(D),
-        .data_out(SSC_DO),
-        .rom_en(SSC_ROM_EN),
-        .uart_cts(UART_CTS),
-        .uart_rts(UART_RTS),
-        .uart_rxd(UART_RXD),
-        .uart_txd(UART_TXD),
-        .uart_dtr(UART_DTR),
-        .uart_dsr(UART_DSR),
-        .irq_n(ssc_irq_n)
-    );
- */   
+ 
+      superserial ssc(
+        .CLK_50M(CLK_50M), 
+        .CLK_14M(CLK_14M), 
+        .CLK_2M(CLK_2M), 
+        .PH_2(PHASE_ZERO), 
+        .IO_SELECT_N(~IO_SELECT[2]),
+        .DEVICE_SELECT_N(~DEVICE_SELECT[2]),
+        .IO_STROBE_N(~IO_STROBE), 
+        .ADDRESS(ADDR), 
+        .RW_N(~cpu_we), 
+        .RESET(reset), 
+        .DATA_IN(D), 
+        .DATA_OUT(SSC_DO), 
+        .ROM_EN(SSC_ROM_EN), 
+        .UART_CTS(UART_CTS), 
+        .UART_RTS(UART_RTS), 
+        .UART_RXD(UART_RXD), 
+        .UART_TXD(UART_TXD), 
+        .UART_DTR(UART_DTR), 
+        .UART_DSR(UART_DSR), 
+        .IRQ_N(ssc_irq_n)
+     );
+      
 
 
     assign audio[6:0] = 7'b0;

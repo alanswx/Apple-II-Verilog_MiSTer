@@ -14,7 +14,7 @@ module superserial(
     //output        NMI_N,
     input         RESET,
     //input         INH_N,
-    input         CLK_50M,
+	 input         CLK_50M,
     input         CLK_14M,
   //  input         CLK_7M,
     input         CLK_2M,
@@ -61,7 +61,7 @@ wire [7:0] SSC;
 
 // DATA_SERIAL_OUT can contain Data, Status, command or control - because ADDRESS[1:0] is passed to the serial chip - and it has a mux in the chip.
 // we need to HANDLE C081 - DIPSW1 and  C082 - DIPSW2 
-/*
+
 assign SSC =                                    
 //      Bits 7=SW1-1 6=SW1-2 5=SW1-3 4=SW1-4 3=X     2=X     1=SW1-5 0=SW1-6
 //        OFF     OFF     OFF     ON      1       1       ON      ON
@@ -71,25 +71,12 @@ assign SSC =
 //        ON      1       ON      1       ON      ON      ON
 //      |1 STOP |       |8 BITS |       | No Parity     |Add LF | CTS
                                                                         (ADDRESS[3:0]  == 4'h2)         ?       {7'b0101000, UART_CTS}:
-        // (ADDRESS[3:0]  == 4'h5)         ?      8'h38:
-        // (ADDRESS[3:0]  == 4'h7)         ?      8'h18:
-        // (ADDRESS[3:0]  == 4'hB)         ?      8'h01:
-        // (ADDRESS[3:0]  == 4'hC)         ?      8'h31:
-	 
+         //(ADDRESS[3:0]  == 4'h5)         ?      8'h38:
+         //(ADDRESS[3:0]  == 4'h7)         ?      8'h18:
+         //(ADDRESS[3:0]  == 4'hB)         ?      8'h01:
+         //(ADDRESS[3:0]  == 4'hC)         ?      8'h31:
 													(ADDRESS[3]     == 1'b1)                ?        DATA_SERIAL_OUT:											
                                                                                    8'b11111111;
-*/
-
-assign SSC =					(ADDRESS[3] 	== 1'b1)		?	 DATA_SERIAL_OUT:
-//	Bits 7=SW1-1 6=SW1-2 5=SW1-3 4=SW1-4 3=X     2=X     1=SW1-5 0=SW1-6
-//        OFF     OFF     OFF     ON      1       1       ON      ON
-//      | 9600 BAUD                     |               | SSC Firmware Mode
-									(ADDRESS[3:0]  == 4'h1)		?	 8'b11101100:
-//	Bits 7=SW2-1 6=X     5=SW2-2 4=X     3=SW2-3 2=SW2=4 1=SW2-5 0=CTS
-//        ON      1       ON      1       ON      ON      ON
-//      |1 STOP |       |8 BITS |       | No Parity     |Add LF | CTS
-									(ADDRESS[3:0]  == 4'h2)		?	{7'b0101000, UART_CTS}:
-																			 8'b11111111;
 /*
 AJS -- TESTING
 
@@ -145,27 +132,41 @@ begin
 		begin
 			if(!SLOTCXROM)
 			begin
-				C8S2 <= 1'b0;
 				if(ADDRESS[7:0] == 8'hFF)
-					C8I <= 1'b0;
+				  C8S2 <= 1'b0;
+				//	C8I <= 1'b0;
 			end
 		end
 		endcase
 	end
 end
 assign SLOT_2IO	= (ADDRESS[15:4]	== 12'hC0A)									?	1'b1: 1'b0;
-assign ENA_C8S =	({(C8S2 & !SLOTCXROM),ADDRESS[15:11]} == 6'b111001)					?	1'b1:
-																													1'b0;
+assign ENA_C8S =	({(C8S2 & !SLOTCXROM),ADDRESS[15:11]} == 6'b111001)					?	1'b1: 1'b0;
 																		
-//assign ROM_EN = ENA_C8S;
-assign DATA_OUT_2 = ENA_C8S ? DOA_C8S : SSC;
+assign ROM_EN = ENA_C8S;
+assign DATA_OUT2 = ENA_C8S ? DOA_C8S : SSC;
 																									
 																									/* END TESTING */
-assign ROM_EN = rom_enabled & ADDRESS[15:11] == 5'b11001;
 
-assign DATA_OUT = ~IO_SELECT_N ? DOA_C8S :
-                  (rom_enabled & ~IO_STROBE_N) ? DOA_C8S :
-                  SSC;
+/*
+always @(posedge CLK_14M)
+begin
+         //if ((ADDRESS[3:0]  == 4'hC))
+         if ((ADDRESS[15:0]  == 16'hC205))
+		$display("IO_SELECT_N %x ROM_EN %x IO_STROBE_N %x DEVICE_SELECT_N %x ADDR %x ROM_ADDR %x RW_N %x DOA_C8S %x DATA_OUT %x",IO_SELECT_N,ROM_EN,IO_STROBE_N,DEVICE_SELECT_N,ADDRESS,ROM_ADDR,RW_N,DOA_C8S,DATA_OUT);
+end
+*/
+
+wire [10:0] ROM_ADDR = ROM_EN ? ADDRESS[10:0] : (ADDRESS[7:0]+'h700);
+assign DATA_OUT = ~IO_SELECT_N ? DOA_C8S : (ROM_EN & ~IO_STROBE_N) ? DOA_C8S : SSC;
+//assign DATA_OUT = ~DEVICE_SELECT_N? SSC : ~IO_SELECT_N ? DOA_C8S : (ROM_EN & ~IO_STROBE_N) ? DOA_C8S : DOA_C8S;
+
+   rom #(8,11,"rtl/roms/superserialcard.hex") roms (
+           .clock(CLK_14M),
+           .ce(1'b1),
+           .a(ROM_ADDR),
+           .data_out(DOA_C8S)
+   );
 
 						
 						/*				
@@ -179,16 +180,9 @@ sprom #(
         .q     (DOA_C8S)
   );
 */
-
-   rom #(8,11,"rtl/roms/superserialcard.hex") roms (
-           .clock(CLK_14M),
-           .ce(1'b1),
-           .a(ADDRESS[10:0]),
-           .data_out(DOA_CBS)
-   );
-
-//ssc_rom rom (.clk(CLK_14M),.addr(ADDRESS[10:0]),.data(DOA_C8S));
-
+ /* 
+ssc_rom rom (.clk(CLK_14M),.addr(ADDRESS[10:0]),.data(DOA_C8S));
+*/
 //
 //  Serial Port
 //

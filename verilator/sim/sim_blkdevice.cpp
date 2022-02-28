@@ -104,7 +104,7 @@ void SimBlockDevice::BeforeEval(int cycles)
     } else if (ack_delay==1 && bitcheck(*img_mounted,i) ) {
 //fprintf(stderr,"mounting flag cleared  %d\n",i);
         bitclear(*img_mounted,i) ;
-        *img_size = 0;
+        //*img_size = 0;
     }
 
     // start reading when sd_rd pulses high

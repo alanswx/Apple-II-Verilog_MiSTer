@@ -38,7 +38,7 @@ int multi_step_amount = 1024;
 
 // Debug GUI 
 // ---------
-const char* windowTitle = "Verilator Sim: Aznable";
+const char* windowTitle = "Verilator Sim: Apple II";
 const char* windowTitle_Control = "Simulation control";
 const char* windowTitle_DebugLog = "Debug log";
 const char* windowTitle_Video = "VGA output";
@@ -261,8 +261,8 @@ int main(int argc, char** argv, char** env) {
 	if (video.Initialise(windowTitle) == 1) { return 1; }
 
         //bus.QueueDownload("floppy.nib",1,0);
-	//blockdevice.MountDisk("floppy.nib",0);
-	blockdevice.MountDisk("hd.hdv",1);
+	blockdevice.MountDisk("floppy.nib",0);
+	//blockdevice.MountDisk("hd.hdv",1);
 
 #ifdef WIN32
 	MSG msg;
