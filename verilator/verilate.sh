@@ -6,7 +6,6 @@ verilator -cc --compiler msvc $WARNINGS $OPTIMIZE \
 --converge-limit 6000 \
 --top-module emu sim.v \
 -I../rtl \
--I../rtl/JTFRAME \
--I../rtl/jt49 \
--I../rtl/jt5205 \
--I../rtl/tv80
+-I../rtl/ssc \
+-I../rtl/mouse \
+-I../rtl/t65
