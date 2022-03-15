@@ -74,7 +74,8 @@ module apple2_top(
     UART_RTS,
     UART_CTS,
     UART_DTR,
-    UART_DSR
+    UART_DSR,
+    RTC
 );
     input         CLK_14M;
     input         CLK_50M;
@@ -147,6 +148,8 @@ module apple2_top(
     input         UART_CTS;
     output        UART_DTR;
     input         UART_DSR;
+
+    input [64:0]  RTC;
     
     // 14.31818 MHz master clock
     // approx. 2 Hz flashing char clock
@@ -196,6 +199,7 @@ module apple2_top(
     wire [7:0]    DISK_DO;
     wire [7:0]    PSG_DO;
     wire [7:0]    HDD_DO;
+    wire [7:0]    CLOCK_DO;
     wire [7:0]    SSC_DO;
     wire          SSC_ROM_EN;
     wire          cpu_we;
@@ -312,7 +316,7 @@ module apple2_top(
     assign ram_di = (reset_cold == 1'b0) ? D : 8'b00000000;
    
 
-    assign PD = (IO_SELECT[4] == 1'b1 & mb_enabled == 1'b1) ? PSG_DO : 
+    assign PD = (IO_SELECT[4] == 1'b1 | DEVICE_SELECT[4] == 1'b1) ? CLOCK_DO : 
                 (IO_SELECT[7] == 1'b1 | DEVICE_SELECT[7] == 1'b1) ? HDD_DO : 
                 (IO_SELECT[6] == 1'b1 | DEVICE_SELECT[6] == 1'b1) ? DISK_DO : 
                 (IO_SELECT[2] == 1'b1 | DEVICE_SELECT[2] == 1'b1 | SSC_ROM_EN == 1'b1) ? SSC_DO : 		// AJS turn on port
@@ -492,6 +496,23 @@ module apple2_top(
         .UART_DTR(UART_DTR), 
         .UART_DSR(UART_DSR), 
         .IRQ_N(ssc_irq_n)
+     );
+      
+      clock_card clock(
+        .CLK_14M(CLK_14M), 
+        .CLK_2M(CLK_2M), 
+        .PH_2(PHASE_ZERO), 
+        .IO_SELECT_N(~IO_SELECT[4]),
+        .DEVICE_SELECT_N(~DEVICE_SELECT[4]),
+        .IO_STROBE_N(~IO_STROBE), 
+        .ADDRESS(ADDR), 
+        .RW_N(~cpu_we), 
+        .RESET(reset), 
+        .DATA_IN(D), 
+        .DATA_OUT(CLOCK_DO), 
+        .ROM_EN(CLOCK_ROM_EN), 
+        .IRQ_N(),
+	.RTC(RTC)
      );
       
 

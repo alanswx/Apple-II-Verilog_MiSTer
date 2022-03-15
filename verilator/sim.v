@@ -105,12 +105,19 @@ module emu (
 	input [9:0] 		img_mounted,
 	input 			img_readonly,
 
-	input [63:0] 		img_size
+	input [63:0] 		img_size,
+
+	input [31:0]		RTC_l,
+	input [31:0]		RTC_h,
+	input 			RTC_toggle,
+	input [32:0]		TIMESTAMP
 
 
 
 );
 wire [15:0] joystick_a0 =  joystick_l_analog_0;
+
+wire [64:0] RTC = {  RTC_toggle, RTC_h,RTC_l};
 
 wire UART_CTS;
 wire UART_RTS;
@@ -225,7 +232,8 @@ apple2_top apple2_top
 	.UART_RTS(UART_RTS),
 	.UART_CTS(UART_CTS),
 	.UART_DTR(UART_DTR),
-	.UART_DSR(UART_DSR)
+	.UART_DSR(UART_DSR),
+	.RTC(RTC)
 
 
 );

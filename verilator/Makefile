@@ -8,6 +8,10 @@ V_INC = +incdir+$(RTL)
 V_DEFINE = +define+debug=1 +define+SIMULATION=1   -CFLAGS "-I../sim/imgui -I../sim/vinc -I../sim/ -O3"  --timescale-override 1ps/1ps -Wno-TIMESCALEMOD  \
 	-I../rtl \
 	-I../rtl/tv80
+#V_DEFINE = +define+debug=1 +define+SIMULATION=1   -CFLAGS "-g -I../sim/imgui -I../sim/vinc -I../sim/"  --timescale-override 1ps/1ps -Wno-TIMESCALEMOD  \
+	-I../rtl \
+	-I../rtl/tv80
+
 #V_DEFINE += --converge-limit 2000 -Wno-WIDTH -Wno-IMPLICIT -Wno-MODDUP -Wno-UNSIGNED -Wno-CASEINCOMPLETE -Wno-CASEX -Wno-SYMRSVDWORD -Wno-COMBDLY -Wno-INITIALDLY -Wno-BLKANDNBLK -Wno-UNOPTFLAT -Wno-SELRANGE -Wno-CMPCONST -Wno-CASEOVERLAP -Wno-PINMISSING -Wno-MULTIDRIVEN
 #V_DEFINE += --threads 8  # this slows it way down
 V_DEFINE += 
@@ -60,6 +64,7 @@ V_SRC = \
 		$(RTL)/mockingboard/via6522.v  \
 		$(RTL)/mockingboard/YM2149.sv  \
 		$(RTL)/disk_ii.v  \
+		$(RTL)/clock_card.v  \
 		$(RTL)/apple2_top.v  \
 		$(RTL)/apple2.v  \
 		$(RTL)/gfloppy.v  \

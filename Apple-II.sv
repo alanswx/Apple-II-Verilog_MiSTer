@@ -273,6 +273,8 @@ wire        ioctl_wr;
 wire [7:0]  ioctl_index;
 wire        ioctl_wait;
 
+wire [64:0] RTC;
+
 hps_io #(.CONF_STR(CONF_STR), .VDNUM(2)) hps_io
 (
 	.clk_sys(clk_sys),
@@ -305,7 +307,7 @@ hps_io #(.CONF_STR(CONF_STR), .VDNUM(2)) hps_io
 	.ioctl_index(ioctl_index),
 	.ioctl_wait(ioctl_wait),
 
-	
+	.RTC(RTC),	
 
 	.ps2_key(ps2_key),
 
@@ -413,7 +415,9 @@ apple2_top apple2_top
 	.UART_RTS(UART_RTS),
 	.UART_CTS(UART_CTS),
 	.UART_DTR(UART_DTR),
-	.UART_DSR(UART_DSR)
+	.UART_DSR(UART_DSR),
+
+	.RTC(RTC)
 
 
 );
@@ -676,5 +680,6 @@ ltc2308_tape ltc2308_tape
 	.dout(tape_adc),
 	.active(tape_adc_act)
 );
+
 
 endmodule

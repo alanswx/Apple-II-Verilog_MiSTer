@@ -108,6 +108,46 @@ void resetSim() {
 	clk_sys.Reset();
 }
 
+	//MSM6242B layout
+void send_clock() {
+	//printf("Update RTC %ld %d\n",main_time,send_clock_done);
+	uint8_t rtc[8];
+	
+//	printf("Update RTC %ld %d\n",main_time,send_clock_done);
+	
+	time_t t;
+
+	time(&t);
+
+	struct tm tm;
+        localtime_r(&t,&tm);
+
+	
+	rtc[0] = (tm.tm_sec % 10) | ((tm.tm_sec / 10) << 4);
+	rtc[1] = (tm.tm_min % 10) | ((tm.tm_min / 10) << 4);
+	rtc[2] = (tm.tm_hour % 10) | ((tm.tm_hour / 10) << 4);
+	rtc[3] = (tm.tm_mday % 10) | ((tm.tm_mday / 10) << 4);
+
+	rtc[4] = ((tm.tm_mon + 1) % 10) | (((tm.tm_mon + 1) / 10) << 4);
+	rtc[5] = (tm.tm_year % 10) | (((tm.tm_year / 10) % 10) << 4);
+	rtc[6] = tm.tm_wday;
+	rtc[7] = 0x40;
+
+	// 64:0
+	 
+	//top->RTC_l = 0;
+	top->RTC_l = rtc[0] | rtc[1] << 8 | rtc[2] << 16 | rtc[3] << 24 ;
+	printf("RTC: %x 0: %x",top->RTC_l,rtc[0]);
+	top->RTC_h = rtc[4] | rtc[5] << 8 | rtc[6] << 16 | rtc[7] << 24 ;
+	//t += t - mktime(gmtime(&t));
+	top->RTC_toggle=~top->RTC_toggle;
+	// 32:0
+	//top->TIMESTAMP=t;//|0x01<<32;
+
+
+}
+
+
 int verilate() {
 
 	if (!Verilated::gotFinish()) {
@@ -220,6 +260,7 @@ int main(int argc, char** argv, char** env) {
 	blockdevice.img_readonly= &top->img_readonly;
 	blockdevice.img_size= &top->img_size;
 
+	send_clock();
 
 #ifndef DISABLE_AUDIO
 	audio.Initialise();
@@ -260,9 +301,10 @@ int main(int argc, char** argv, char** env) {
 	// Setup video output
 	if (video.Initialise(windowTitle) == 1) { return 1; }
 
+
         //bus.QueueDownload("floppy.nib",1,0);
-	blockdevice.MountDisk("floppy.nib",0);
-	//blockdevice.MountDisk("hd.hdv",1);
+	//blockdevice.MountDisk("floppy.nib",0);
+	blockdevice.MountDisk("hd.hdv",1);
 
 #ifdef WIN32
 	MSG msg;

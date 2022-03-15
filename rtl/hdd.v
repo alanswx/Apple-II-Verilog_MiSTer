@@ -69,7 +69,8 @@ module hdd(
     reg [7:0]        reg_mem_h;
     reg [7:0]        reg_block_l;
     reg [7:0]        reg_block_h;
-    
+   
+    reg PHASE_ZERO_r; 
     // Internal sector buffer offset counter; incremented by
     // access to C0F8 and reset when a command is written to
     // C0F2.
@@ -97,7 +98,7 @@ module hdd(
         
         begin
             D_OUT <= 8'hFF;
-	if (PHASE_ZERO ) begin
+	if (PHASE_ZERO  ) begin
             hdd_read <= 1'b0;
             hdd_write <= 1'b0;
             if (RESET == 1'b1)
@@ -137,7 +138,9 @@ module hdd(
                                             if (hdd_mounted == 1'b1 & reg_unit == 8'h70)
                                             begin
 	//$display("HDD PRODOS COMMAND READ");
+						if (~select_d)begin
                                                 hdd_read <= 1'b1;
+					end
                                                 reg_status <= 8'h00;
                                                 D_OUT <= 8'h00;
                                             end

@@ -38,13 +38,16 @@ QData* img_size=NULL;
 void SimBlockDevice::MountDisk( std::string file, int index) {
 	disk[index].open(file.c_str(), std::ios::out | std::ios::in | std::ios::binary | std::ios::ate);
         if (disk[index]) {
+		fprintf(stderr,"we are here\n");
            // we shouldn't do the actual mount here..
            disk_size[index]= disk[index].tellg();
 	//fprintf(stderr,"mount size %ld\n",disk_size[index]);
            disk[index].seekg(0);
            mountQueue[index]=1;
            printf("disk %d inserted (%s)\n",index,file.c_str());
-        }
+        }else {
+		fprintf(stderr,"some kind of error: %s\n",file.c_str());
+	}
 
 }
 
@@ -69,10 +72,10 @@ void SimBlockDevice::BeforeEval(int cycles)
          *sd_buff_dout = disk[i].get();
          *sd_buff_addr = bytecnt++;
          *sd_buff_wr= 1;
-         printf("cycles %x reading %X : %X ack %x\n",cycles,*sd_buff_addr,*sd_buff_dout,*sd_ack );
+         //printf("cycles %x reading %X : %X ack %x\n",cycles,*sd_buff_addr,*sd_buff_dout,*sd_ack );
       } else if(writing && *sd_buff_addr != bytecnt && (bytecnt < kBLKSZ)) {
       //} else if(writing && (bytecnt < kBLKSZ)) {
-  	printf("writing disk %i at sd_buff_addr %x data %x ack %x\n",i,*sd_buff_addr,*sd_buff_din[i],*sd_ack);
+  	//printf("writing disk %i at sd_buff_addr %x data %x ack %x\n",i,*sd_buff_addr,*sd_buff_din[i],*sd_ack);
         disk[i].put(*(sd_buff_din[i]));
         *sd_buff_addr = bytecnt;
       } else {
@@ -93,16 +96,16 @@ void SimBlockDevice::BeforeEval(int cycles)
 
     // issue a mount if we aren't doing anything, and the img_mounted has no bits set
     if (!reading && !writing && mountQueue[i] && !*img_mounted) {
-//fprintf(stderr,"mounting.. %d\n",i);
+fprintf(stderr,"mounting.. %d\n",i);
            mountQueue[i]=0;
            *img_size = disk_size[i];
 	   *img_readonly=0;
-//fprintf(stderr,"img_size .. %ld\n",*img_size);
+fprintf(stderr,"img_size .. %ld\n",*img_size);
            disk[i].seekg(0);
            bitset(*img_mounted,i);
            ack_delay=1200;
     } else if (ack_delay==1 && bitcheck(*img_mounted,i) ) {
-//fprintf(stderr,"mounting flag cleared  %d\n",i);
+fprintf(stderr,"mounting flag cleared  %d\n",i);
         bitclear(*img_mounted,i) ;
         //*img_size = 0;
     }
