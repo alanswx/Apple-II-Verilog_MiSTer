@@ -24,8 +24,8 @@ CData* sd_buff_dout=NULL;
 CData* sd_buff_din[kVDNUM]= {NULL,NULL,NULL,NULL,NULL,
                    NULL,NULL,NULL,NULL,NULL};
 CData* sd_buff_wr=NULL;
-CData* img_mounted=NULL;
-SData* img_readonly=NULL;
+SData* img_mounted=NULL;
+CData* img_readonly=NULL;
 QData* img_size=NULL;
 
 
