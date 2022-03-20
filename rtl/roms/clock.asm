@@ -1,21 +1,6 @@
 ;This is 6502 assembler code for a ProDOS compatible
-;Apple II bootable serial drive.
+;Clock Card
 ;
-
-
-;Calculate I/O addresses for this slot
-sdrive_7 =     $70
-
-;Hardware addresses
-UART =        $C0F0     ; Slot 5 UART base address
-;#define SCREEN      $0400
-
-ROM_WP = $C060
-OPT_ROM= $C006
-INT_ROM = $C007
-
-INTC3ROM= $C00A
-SLOT3ROM= $C00B
 
 ZERO =        $00
 
@@ -35,43 +20,8 @@ SEC_TENS   =    $C08D
 SEC_ONES   =    $C08E
 
 
-
-; Slot 5 RAM locations
-; We can use these if we want to
-sram0_5 =   $47D                   ; scratch
-sram1_5 =   $4FD
-sram2_5 =   $57D
-sram3_5  =  $5FD
-sram4_5   =  $67D
-sram5_5     = $6FD
-sram6_5   =   $77D
-sram7_5 =     $7FD
-
-; Slot 7 RAM locations
-sram0_7 =   $47F
-CHECKSUM=   $47F	; Storage for calculating checksums
-sram1_7 =   $4FF
-BLOCK_HI=   $4FF	; Storage for the calculated high block address
-sram2_7 =   $57F
-sram3_7 =   $5FF
-sram4_7 =   $67F
-sram5_7 =   $6FF
-sram6_7 =   $77F
-sram7_7 =     $7FF
-
-;ProDOS defines
-command    =$42       ;ProDOS command
-unit       =$43       ;7=drive 6-4=slot 3-0=not used
-buflo      =$44       ;low address of buffer
-bufhi      =$45       ;hi address of buffer
-blklo      =$46       ;low block
-blkhi      =$47       ;hi block
-ioerr      =$27       ;I/O error code
-nodev      =$28       ;no device connected
-wperr      =$2B       ;write protect error
-monitor   = $FF69
-
-        *=        $C400
+; Entry for the clock card
+        *=        $C400  ; do we want this? the card shouldn't be anchored to C400
         PHP
         SEI
         PLP
@@ -92,7 +42,8 @@ READ_TIME
         ; find slot number
         php 
         sei
-        jsr                     MYLABEL
+        ;jsr                     RTS_ONLY
+        jsr                     $FF58
         tsx
         lda                     $0100,X
         and                     #$07
@@ -151,5 +102,5 @@ READ_TIME
         pla
         rts
 
-MYLABEL
+RTS_ONLY
         rts
