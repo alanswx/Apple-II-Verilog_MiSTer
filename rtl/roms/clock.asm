@@ -19,6 +19,7 @@ MIN_ONES   =    $C08C
 SEC_TENS   =    $C08D
 SEC_ONES   =    $C08E
 
+ROMSOFF = $CFFF
 
 ; Entry for the clock card
         *=        $C400  ; do we want this? the card shouldn't be anchored to C400
@@ -40,19 +41,21 @@ READ_TIME
         pha
 
         ; find slot number
-        php 
+        php
         sei
-        ;jsr                     RTS_ONLY
+        STA                     ROMSOFF
+        lda                     $C089
+        lda                     $C089
         jsr                     $FF58
         tsx
         lda                     $0100,X
+        plp
         and                     #$07
         asl
         asl
         asl
         asl
-        tax                                                     ;X will be $0S for memory locations
-        plp
+        tax                              ;X will be $S0 for memory locations
         ; restore
 
         lda  #','+$80
@@ -99,8 +102,7 @@ READ_TIME
         lda  #$8D			; carrage return
         sta  $020E
         ldx  #$0E
+	lda			$C08B
+	lda			$C08B
         pla
-        rts
-
-RTS_ONLY
         rts
