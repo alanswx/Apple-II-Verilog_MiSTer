@@ -155,10 +155,10 @@ module T65(
     DEBUG_Y,
     DEBUG_S,
     DEBUG_P,
-    NMI_ack
+    NMI_ack,
+    PRINT
 );
     // begin code from package t65_pack
-    
     
     
     
@@ -290,6 +290,7 @@ module T65(
     output [7:0]  DEBUG_P;
     output        NMI_ack;
     
+   output reg PRINT; 
     
     // Registers
     reg [15:0]    ABC;
@@ -404,7 +405,17 @@ module T65(
     assign DEBUG_P = P;
     
     assign Regs = {PC, S, P, Y[7:0], X[7:0], ABC[7:0]};
-    
+/*
+    always @(posedge Clk)
+    begin
+         PRINT<=0;
+	    if ((PC >= 'hC500 && PC <'hC600) || (PC>='hFF50&&PC<'hFF70))
+	    begin
+	    PRINT<=1;
+		    $display("PC %x IR %x A %x X %x DEBUG_X %x Y %x S %x P %x ADDR %x DI %x DO %x",PC,IR,ABC,X,DEBUG_X,Y,S,P,A,DI,DO);
+	    end
+    end
+ */   
     
     T65_MCode mcode(
 
@@ -457,6 +468,7 @@ module T65(
     // the 65xx design requires at least two clock cycles before
     // starting its reset sequence (according to datasheet)
     
+
     always @(negedge Res_n or posedge Clk)
         if (Res_n == 1'b0)
         begin

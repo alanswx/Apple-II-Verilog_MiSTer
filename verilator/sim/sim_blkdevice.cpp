@@ -103,7 +103,7 @@ fprintf(stderr,"mounting.. %d\n",i);
 fprintf(stderr,"img_size .. %ld\n",*img_size);
            disk[i].seekg(0);
            bitset(*img_mounted,i);
-           ack_delay=1200;
+           //ack_delay=1200;
     } else if (ack_delay==1 && bitcheck(*img_mounted,i) ) {
 fprintf(stderr,"mounting flag cleared  %d\n",i);
         bitclear(*img_mounted,i) ;

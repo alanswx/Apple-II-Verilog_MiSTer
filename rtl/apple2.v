@@ -499,8 +499,13 @@ end
                   (ROM_SELECT == 1'b1) ? rom_out : 		// ROMs
                   (TAPE_OUT == 1'b1 | SPEAKER_SELECT == 1'b1 | STB == 1'b1 | SOFTSWITCH_SELECT == 1'b1 | PDL_STROBE == 1'b1 | HRAM_CONTROL == 1'b1 | A == 16'hCFFF) ? VIDEO_DL : 		// Floating bus
                   PD;		// Peripherals
-    
-    
+  /* 
+ always @( posedge CLK_14M)
+ begin
+   if (CPU_PRINT)
+	   $display("PRINT: RAM_SELECT %x ROM_SELECT %x rom_out %x D_IN %x PD %x GAME %x c01x %x Keyboard %x CPU_DL %x ram_card_read %x hram_read %x HRAM_BANK1 %x HRAM_READ %x ALTZP %x",RAM_SELECT,ROM_SELECT,rom_out,D_IN,PD,GAMEPORT_SELECT,C01X_SELECT,KEYBOARD_SELECT,CPU_DL,ram_card_read,HRAM_READ_EN,HRAM_BANK1,HRAM_READ,ALTZP);
+ end
+ */
     timing_generator timing(
         .CLK_14M(CLK_14M),
         .VID7M(CLK_7M),
@@ -570,7 +575,7 @@ end
   
     
     T65 cpu6502(
-        .Mode(2'b00),
+        .Mode(2'b01),
         .Clk(CLK_14M),
         .Enable(CPU_EN & ~CPU_WAIT),
         .Res_n(~reset),
@@ -584,9 +589,10 @@ end
         .R_W_n(T65_WE_N),
         .A(T65_A),
         .DI(T65_DI),
-        .DO(T65_DO)
+        .DO(T65_DO),
+	.PRINT(CPU_PRINT)
     );
-    
+   wire CPU_PRINT; 
 //`ifdef VERILATOR
 	// we don't have a working version of this CHIP yet in verilog
 //`else  

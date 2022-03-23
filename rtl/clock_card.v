@@ -34,6 +34,17 @@ reg V_SYNC;
 
 always @(posedge CLK_2M)
 begin
+	if (DEVICE_SELECT_N == 0 ) 
+          $display("DS_N=0 SLOT_4IO: %x addr %x CLK_IN %x", SLOT_4IO,ADDRESS[3:0],CLK_IN);
+
+        if ({SLOT_IO, ADDRESS[3:0]}== 5'b10100)
+	  $display("MONTHS_10 : ADDR %x CLK_IN %x",ADDRESS[3:0],CLK_IN);
+
+	if (IO_SELECT_N == 0 ) 
+          $display("IOS_N=0 SLOT_4IO: %x", SLOT_4IO);
+	if (SLOT_4IO== 1 ) 
+          $display("SLOT_4IO=1 DS_N: %x IOS_N %x", DEVICE_SELECT_N,IO_SELECT_N);
+
 	second_div<=second_div+1'b1;
 	V_SYNC<=1'b0;
 	//$display("second_div %d",second_div);
@@ -41,7 +52,7 @@ begin
 	begin
 		second_div<=1'b0;
 		V_SYNC<=1'b1;
-		$display("V_SYNC is now 1");
+		//$display("V_SYNC is now 1");
 	end
 end
 
@@ -62,27 +73,27 @@ reg     [5:0]           DEB_COUNTER;
 
 
 wire SLOT_4IO = (ADDRESS[15:4]        == 12'hC0C)   ?  1'b1: 1'b0;
-
+wire SLOT_IO = ~DEVICE_SELECT_N;
 
 /*****************************************************************************
 * Hardware Clock
 ******************************************************************************/
 wire [7:0] CLK_IN =
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b10000)?  8'h32:							// Year thousand
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b10001)?  8'h30:							// Year hundreds
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b10010)? {4'h3,  YEARS_TENS}:			// Year tens
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b10011)? {4'h3,  YEARS_ONES}:			// Year ones
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b10100)? {7'h18, MONTHS_TENS}:		// Month tens
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b10101)? {4'h3,  MONTHS_ONES}:		// Month ones
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b10110)? {5'h06, DAY_WEEK}:			// Day of week
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b10111)? {6'h0C, DAYS_TENS}:
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b11000)? {4'h3,  DAYS_ONES}:
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b11001)? {6'h0C, HOURS_TENS}:
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b11010)? {4'h3,  HOURS_ONES}:
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b11011)? {5'h06, MINUTES_TENS}:
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b11100)? {4'h3,  MINUTES_ONES}:
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b11101)? {5'h06, SECONDS_TENS}:
-		({SLOT_4IO, ADDRESS[3:0]}== 5'b11110)? {4'h3,  SECONDS_ONES}:
+		({SLOT_IO, ADDRESS[3:0]}== 5'b10000)?  8'h32:							// Year thousand
+		({SLOT_IO, ADDRESS[3:0]}== 5'b10001)?  8'h30:							// Year hundreds
+		({SLOT_IO, ADDRESS[3:0]}== 5'b10010)? {4'h3,  YEARS_TENS}:			// Year tens
+		({SLOT_IO, ADDRESS[3:0]}== 5'b10011)? {4'h3,  YEARS_ONES}:			// Year ones
+		({SLOT_IO, ADDRESS[3:0]}== 5'b10100)? {7'h18, MONTHS_TENS}:		// Month tens
+		({SLOT_IO, ADDRESS[3:0]}== 5'b10101)? {4'h3,  MONTHS_ONES}:		// Month ones
+		({SLOT_IO, ADDRESS[3:0]}== 5'b10110)? {5'h06, DAY_WEEK}:			// Day of week
+		({SLOT_IO, ADDRESS[3:0]}== 5'b10111)? {6'h0C, DAYS_TENS}:
+		({SLOT_IO, ADDRESS[3:0]}== 5'b11000)? {4'h3,  DAYS_ONES}:
+		({SLOT_IO, ADDRESS[3:0]}== 5'b11001)? {6'h0C, HOURS_TENS}:
+		({SLOT_IO, ADDRESS[3:0]}== 5'b11010)? {4'h3,  HOURS_ONES}:
+		({SLOT_IO, ADDRESS[3:0]}== 5'b11011)? {5'h06, MINUTES_TENS}:
+		({SLOT_IO, ADDRESS[3:0]}== 5'b11100)? {4'h3,  MINUTES_ONES}:
+		({SLOT_IO, ADDRESS[3:0]}== 5'b11101)? {5'h06, SECONDS_TENS}:
+		({SLOT_IO, ADDRESS[3:0]}== 5'b11110)? {4'h3,  SECONDS_ONES}:
 															{2'b00, DEB_COUNTER};		/*Not needed for Apple*/
 
 
@@ -114,7 +125,7 @@ begin
 		YEARS_ONES<= RTC[43:40];
 	end
 	else
-	case({RW_N, SLOT_4IO, ADDRESS[3:0]})
+	case({RW_N, SLOT_IO, ADDRESS[3:0]})
 		6'b010010:									// Write C0C2
 		begin
 			YEARS_TENS <= DATA_IN[3:0];		// 0-9
@@ -244,7 +255,7 @@ begin
 				end
 				else
 				begin
-					$display("increment deb_counter seconds %d SECONDS_ONES %d",DEB_COUNTER,SECONDS_ONES);
+					//$display("increment deb_counter seconds %d SECONDS_ONES %d",DEB_COUNTER,SECONDS_ONES);
 					DEB_COUNTER <= DEB_COUNTER + 1'b1;
 				end
 			end
@@ -256,7 +267,9 @@ wire [7:0] DOA_CS;
 wire [7:0] ROM_ADDR = ADDRESS[7:0];
 assign DATA_OUT = ~IO_SELECT_N ? DOA_CS :  CLK_IN;
 
-   rom #(8,8,"rtl/roms/clock.hex") roms (
+
+
+   rom #(8,8,"rtl/roms/clock2.hex") roms (
            .clock(CLK_14M),
            .ce(1'b1),
            .a(ROM_ADDR),

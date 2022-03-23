@@ -316,7 +316,7 @@ module apple2_top(
     assign ram_di = (reset_cold == 1'b0) ? D : 8'b00000000;
    
 
-    assign PD = (IO_SELECT[4] == 1'b1 | DEVICE_SELECT[4] == 1'b1) ? CLOCK_DO : 
+    assign PD = (IO_SELECT[1] == 1'b1 | DEVICE_SELECT[1] == 1'b1) ? CLOCK_DO : 
                 (IO_SELECT[7] == 1'b1 | DEVICE_SELECT[7] == 1'b1) ? HDD_DO : 
                 (IO_SELECT[6] == 1'b1 | DEVICE_SELECT[6] == 1'b1) ? DISK_DO : 
                 (IO_SELECT[2] == 1'b1 | DEVICE_SELECT[2] == 1'b1 | SSC_ROM_EN == 1'b1) ? SSC_DO : 		// AJS turn on port
@@ -502,8 +502,8 @@ module apple2_top(
         .CLK_14M(CLK_14M), 
         .CLK_2M(CLK_2M), 
         .PH_2(PHASE_ZERO), 
-        .IO_SELECT_N(~IO_SELECT[4]),
-        .DEVICE_SELECT_N(~DEVICE_SELECT[4]),
+        .IO_SELECT_N(~IO_SELECT[1]),
+        .DEVICE_SELECT_N(~DEVICE_SELECT[1]),
         .IO_STROBE_N(~IO_STROBE), 
         .ADDRESS(ADDR), 
         .RW_N(~cpu_we), 
