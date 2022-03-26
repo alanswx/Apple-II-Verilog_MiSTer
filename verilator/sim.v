@@ -269,12 +269,19 @@ always @(posedge clk_sys) begin
 	end
 end
 
+assign sd_rd = { 8'b0, sd_rd_hd,sd_rd_fdd };
+assign sd_wr = { 8'b0, sd_wr_hd,sd_wr_fdd };
+wire sd_rd_fdd;
+wire sd_wr_fdd;
+
 reg  hdd_mounted = 0;
 wire hdd_read;
 wire hdd_write;
 reg  hdd_protect;
 reg  cpu_wait_hdd = 0;
 
+reg  sd_rd_hd;
+reg  sd_wr_hd;
 
 always @(posedge clk_sys) begin
 	reg old_ack ;
@@ -296,14 +303,14 @@ always @(posedge clk_sys) begin
 		cpu_wait_hdd <= 0;
 		hdd_read_pending <= 0;
 		hdd_write_pending <= 0;
-		sd_rd[1] <= 0;
-		sd_wr[1] <= 0;
+		sd_rd_hd <= 0;
+		sd_wr_hd <= 0;
 	end
 	else if(!state) begin
 		if (hdd_read_pending | hdd_write_pending) begin
 			state <= 1;
-			sd_rd[1] <= hdd_read_pending;
-			sd_wr[1] <= hdd_write_pending;
+			sd_rd_hd <= hdd_read_pending;
+			sd_wr_hd <= hdd_write_pending;
 			cpu_wait_hdd <= 1;
 		end
 	end
@@ -311,8 +318,8 @@ always @(posedge clk_sys) begin
 		if (~old_ack & sd_ack[1]) begin
 			hdd_read_pending <= 0;
 			hdd_write_pending <= 0;
-			sd_rd[1] <= 0;
-			sd_wr[1] <= 0;
+			sd_rd_hd <= 0;
+			sd_wr_hd <= 0;
 			$display("~old ack %x sd_ack[1] %x",~old_ack,sd_ack[1]);
 		end
 		else if(old_ack & ~sd_ack[1]) begin
@@ -325,18 +332,41 @@ end
 
 
 
+wire  [5:0] track;
+reg   [3:0] track_sec;
+reg         cpu_wait_fdd = 0;
 
+
+
+track_loader track_loader_a
+(
+    .clk(clk_sys),
+    .reset(reset),
+    .lba_fdd(sd_lba[0]),
+    .track(track),
+    .img_mounted(img_mounted[0]),
+    .img_size(img_size),
+    .cpu_wait_fdd(cpu_wait_fdd),
+    .sd_ack(sd_ack[0]),
+    .sd_rd(sd_rd_fdd),
+    .sd_wr(sd_wr_fdd),
+    .sd_buff_addr(sd_buff_addr),
+    .sd_buff_wr(sd_buff_wr),
+    .sd_buff_dout(sd_buff_dout),
+    .sd_buff_din(sd_buff_din[0]),
+    .fd_track_addr(fd_track_addr),
+    .fd_write_disk(fd_write_disk),
+    .fd_data_do(fd_data_do),
+    .fd_data_in(fd_data_in)
+);
 
 
 
 // [12:9] -- this is the track number
 
-
+`ifdef OFF
 
 assign      sd_lba[0] = lba_fdd;
-wire  [5:0] track;
-reg   [3:0] track_sec;
-reg         cpu_wait_fdd = 0;
 reg  [31:0] lba_fdd;
 reg       fd_write_pending = 0;
 
@@ -536,6 +566,7 @@ bram #(8,14) floppy_dpram_onetrack
 	.q_b(fd_data_in)
 );
 
+`endif
 
 wire fd_busy;
 wire sd_busy;
