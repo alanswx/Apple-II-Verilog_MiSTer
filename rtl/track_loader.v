@@ -1,6 +1,7 @@
 module track_loader (
 	input         clk,
 	input         reset,
+	input         active,
 	output reg [31:0] lba_fdd,
 	input  [5:0]  track,
 	input         img_mounted,
@@ -23,7 +24,6 @@ module track_loader (
 
 reg [3:0]  track_sec;
 
-reg         fd_write_pending = 0;
 reg         fdd_mounted ;
 reg  [63:0] disk_size;
 
@@ -58,7 +58,6 @@ always @(posedge clk) begin
                 state <= 0;
                 cpu_wait_fdd <= 0;
                 sd_rd <= 0;
-                fd_write_pending<=0;
                 floppy_track_dirty<=0;
         end
 
@@ -140,14 +139,14 @@ bram #(8,14) floppy_dpram_onetrack
 dpram #(14,8) floppy_dpram
 (
 	.clock_a(clk),
-	.address_a({track_sec, sd_buff_addr}),
+	.address_a({1'b0,track_sec, sd_buff_addr}),
 	.wren_a(sd_buff_wr & sd_ack),
 	.data_a(sd_buff_dout),
 	.q_a(sd_buff_din),
 
 	.clock_b(clk),
 	.address_b(fd_track_addr),
-	.wren_b(fd_write_disk),
+	.wren_b(fd_write_disk & active),
 	.data_b(fd_data_do),
 	.q_b(fd_data_in)
 

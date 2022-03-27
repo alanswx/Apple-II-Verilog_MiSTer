@@ -304,6 +304,7 @@ int main(int argc, char** argv, char** env) {
 
         //bus.QueueDownload("floppy.nib",1,0);
 	blockdevice.MountDisk("floppy.nib",0);
+	blockdevice.MountDisk("floppy2.nib",2);
 	//blockdevice.MountDisk("hd.hdv",1);
 
 #ifdef WIN32

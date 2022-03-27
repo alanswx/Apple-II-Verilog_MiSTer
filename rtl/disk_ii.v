@@ -72,7 +72,8 @@ module disk_ii(
     A,
     D_IN,
     D_OUT,
-    TRACK,
+    TRACK1,
+    TRACK2,
     track_addr,
     D1_ACTIVE,
     D2_ACTIVE,
@@ -94,7 +95,8 @@ module disk_ii(
     input [15:0]  A;
     input [7:0]   D_IN;		// From 6502
     output [7:0]  D_OUT;		// To 6502
-    output [5:0]  TRACK;		// Current track (0-34)
+    output [5:0]  TRACK1;		// Current track (0-34)
+    output [5:0]  TRACK2;		// Current track (0-34)
     output [13:0] track_addr;
     output        D1_ACTIVE;		// Disk 1 motor on
     output        D2_ACTIVE;		// Disk 2 motor on
@@ -104,24 +106,29 @@ module disk_ii(
     
     output        DISK_FD_WRITE_DISK;
     output        DISK_FD_READ_DISK;
-    output [13:0] DISK_FD_TRACK_ADDR;
+    output [13:0] DISK_FD_TRACK_ADDR;		// Address for track RAM
     input [7:0]   DISK_FD_DATA_IN;
     output [7:0]  DISK_FD_DATA_OUT;
     
     
-    reg [3:0]     motor_phase;
+    reg [3:0]     motor_phase1;
+    reg [3:0]     motor_phase2;
     reg           drive_on;
     reg           drive2_select;
     reg           q6;
     reg           q7;
-    reg           CLK_2M_D;
-    
+    reg           PHASE_ZERO_D;
+    reg           write_disk_out;
+    reg [13:0]    write_disk_addr;
+    reg [7:0]     floppy_write_data_out;
+    reg [7:0]     floppy_write_data;
     wire [7:0]    rom_dout;
     
     // Current phase of the head.  This is in half-steps to assign
     // a unique position to the case, say, when both phase 0 and phase 1 are
     // on simultaneously.  phase(7 downto 2) is the track number
-    reg [7:0]     phase;		// 0 - 139
+    reg [7:0]     phase1;		// 0 - 139
+    reg [7:0]     phase2;		// 0 - 139
     
     // Storage for one track worth of data in "nibblized" form
     // Double-ported RAM for holding a track
@@ -134,37 +141,134 @@ module disk_ii(
     // being read into the shift register, which indicates the data is
     // not yet ready.
     reg [14:0]    track_byte_addr;
-    reg [13:0] write_disk_addr;
-    wire          read_disk;		// When C08C accessed and q6 low
-    wire          write_disk;		// When C08C accessed and q6 high
-    reg write_disk_out;	// When C08C accessed and q6 high
-//signal read_disk : std_logic;         -- When C08C accessed and q6 low
-//signal write_disk : std_logic;        -- When C08C accessed and q6 high 
-
-   reg [7:0] floppy_write_data;
-   reg [7:0] floppy_write_data_out;
-       reg              select_d; 
+    wire          read_disk;		// When C08C accessed
+    wire          write_disk;
+    reg           select_d;
+    
+    function integer NEXT_PHASE;
+        input [3:0]   motor_phase;
+        input [7:0]   phase;
+        integer       phase_change;
+        integer       new_phase;
+        reg [3:0]     rel_phase;
+    begin
+        phase_change = 0;
+        new_phase = phase;
+        rel_phase = motor_phase;
+        case (phase[2:1])
+            2'b00 :
+                rel_phase = {rel_phase[1:0], rel_phase[3:2]};
+            2'b01 :
+                rel_phase = {rel_phase[2:0], rel_phase[3]};
+            2'b10 :
+                ;
+            2'b11 :
+                rel_phase = {rel_phase[0], rel_phase[3:1]};
+            default :
+                ;
+        endcase
+        
+        if (phase[0] == 1'b1)		// Phase is odd
+            case (rel_phase)
+                4'b0000 :
+                    phase_change = 0;
+                4'b0001 :
+                    phase_change = -3;
+                4'b0010 :
+                    phase_change = -1;
+                4'b0011 :
+                    phase_change = -2;
+                4'b0100 :
+                    phase_change = 1;
+                4'b0101 :
+                    phase_change = -1;
+                4'b0110 :
+                    phase_change = 0;
+                4'b0111 :
+                    phase_change = -1;
+                4'b1000 :
+                    phase_change = 3;
+                4'b1001 :
+                    phase_change = 0;
+                4'b1010 :
+                    phase_change = 1;
+                4'b1011 :
+                    phase_change = -3;
+                4'b1111 :
+                    phase_change = 0;
+                default :
+                    ;
+            endcase
+        else
+            // Phase is even
+            case (rel_phase)
+                4'b0000 :
+                    phase_change = 0;
+                4'b0001 :
+                    phase_change = -2;
+                4'b0010 :
+                    phase_change = 0;
+                4'b0011 :
+                    phase_change = -1;
+                4'b0100 :
+                    phase_change = 2;
+                4'b0101 :
+                    phase_change = 0;
+                4'b0110 :
+                    phase_change = 1;
+                4'b0111 :
+                    phase_change = 0;
+                4'b1000 :
+                    phase_change = 0;
+                4'b1001 :
+                    phase_change = 1;
+                4'b1010 :
+                    phase_change = 2;
+                4'b1011 :
+                    phase_change = -2;
+                4'b1111 :
+                    phase_change = 0;
+                default :
+                    ;
+            endcase
+        
+        if (new_phase + phase_change <= 0)
+            new_phase = 0;
+        else if (new_phase + phase_change > 139)
+            new_phase = 139;
+        else
+            new_phase = new_phase + phase_change;
+        NEXT_PHASE = new_phase;
+    end
+    endfunction
+    
+    
     always @(posedge CLK_14M)
     begin: interpret_io
         
         begin
             if (RESET == 1'b1)
             begin
-                motor_phase <= 4'b0;
+                motor_phase1 <= {4{1'b0}};
+                motor_phase2 <= {4{1'b0}};
                 drive_on <= 1'b0;
                 drive2_select <= 1'b0;
                 q6 <= 1'b0;
                 q7 <= 1'b0;
-		floppy_write_data<=8'b0;
+                floppy_write_data <= 8'b00000000;
             end
             else
-if (PHASE_ZERO) begin
-		select_d<=DEVICE_SELECT;
+            begin
+                select_d <= DEVICE_SELECT;
                 if (DEVICE_SELECT == 1'b1)
                 begin
-		//$display("A[3] %x , A[2:1] %x ",A[3],A[2:1]);
                     if (A[3] == 1'b0)		// C080 - C087
-                        motor_phase[(A[2:1])] <= A[0];
+                    begin
+                        if (drive2_select == 1'b0)
+                            motor_phase1[(A[2:1])] <= A[0];
+                        else
+                            motor_phase2[(A[2:1])] <= A[0];
+                    end
                     else
                         case (A[2:1])
                             2'b00 :		// C088 - C089
@@ -172,29 +276,25 @@ if (PHASE_ZERO) begin
                             2'b01 :		// C08A - C08B
                                 drive2_select <= A[0];
                             2'b10 :		// C08C - C08D
-				begin
-                                q6 <= A[0];
-				if (A[0])
-                                        if (select_d==1'b0)
-				 		floppy_write_data<=D_IN;
-				end
-				
+                                begin
+                                    q6 <= A[0];
+                                    if (A[0] == 1'b1 & select_d == 1'b0)
+                                        floppy_write_data <= D_IN;
+                                end
                             2'b11 :		// C08E - C08F
-				begin
                                 q7 <= A[0];
-				//if (A[0])
-				// 	floppy_write_data<=D_IN;
-				end
                             default :
                                 ;
                         endcase
                 end
+            end
         end
-end
     end
     
-    assign D1_ACTIVE = drive_on & (~drive2_select);
-    assign D2_ACTIVE = drive_on & drive2_select;
+    //assign D1_ACTIVE = drive_on & (~drive2_select);
+    //assign D2_ACTIVE = drive_on & drive2_select;
+    assign D1_ACTIVE = (~drive2_select);
+    assign D2_ACTIVE =  drive2_select;
     
     // There are two cases:
     //
@@ -214,6 +314,10 @@ end
     //  0   1   2   3   0
     //
     
+    always @(posedge CLK_14M)
+    begin
+	    if (read_disk) $display("drive_on %x drive_2_select %x D1_ACTIVE %x TRACK1 %x D2_ACTIVE %x TRACK2 %x",drive_on,drive2_select,D1_ACTIVE,TRACK1,D2_ACTIVE,TRACK2);
+    end
     
     always @(posedge CLK_14M)
     begin: update_phase
@@ -223,228 +327,99 @@ end
         
         begin
             if (RESET == 1'b1)
-                phase <= 4;//70;		// Deliberately odd to test reset
+            begin
+                phase1 <= 70;		// Deliberately odd to test reset
+                phase2 <= 70;		// Deliberately odd to test reset
+            end
             else
             begin
-                phase_change = 0;
-                new_phase = phase;
-                rel_phase = motor_phase;
-                case (phase[2:1])
-                    2'b00 :
-                        rel_phase = {rel_phase[1:0], rel_phase[3:2]};
-                    2'b01 :
-                        rel_phase = {rel_phase[2:0], rel_phase[3]};
-                    2'b10 :
-                        ;
-                    2'b11 :
-                        rel_phase = {rel_phase[0], rel_phase[3:1]};
-                    default :
-                        ;
-                endcase
-                
-                if (phase[0] == 1'b1)		// Phase is odd
-                    case (rel_phase)
-                        4'b0000 :
-                            phase_change = 0;
-                        4'b0001 :
-                            phase_change = -3;
-                        4'b0010 :
-                            phase_change = -1;
-                        4'b0011 :
-                            phase_change = -2;
-                        4'b0100 :
-                            phase_change = 1;
-                        4'b0101 :
-                            phase_change = -1;
-                        4'b0110 :
-                            phase_change = 0;
-                        4'b0111 :
-                            phase_change = -1;
-                        4'b1000 :
-                            phase_change = 3;
-                        4'b1001 :
-                            phase_change = 0;
-                        4'b1010 :
-                            phase_change = 1;
-                        4'b1011 :
-                            phase_change = -3;
-                        4'b1111 :
-                            phase_change = 0;
-                        default :
-                            ;
-                    endcase
-                else
-                    // Phase is even
-                    case (rel_phase)
-                        4'b0000 :
-                            phase_change = 0;
-                        4'b0001 :
-                            phase_change = -2;
-                        4'b0010 :
-                            phase_change = 0;
-                        4'b0011 :
-                            phase_change = -1;
-                        4'b0100 :
-                            phase_change = 2;
-                        4'b0101 :
-                            phase_change = 0;
-                        4'b0110 :
-                            phase_change = 1;
-                        4'b0111 :
-                            phase_change = 0;
-                        4'b1000 :
-                            phase_change = 0;
-                        4'b1001 :
-                            phase_change = 1;
-                        4'b1010 :
-                            phase_change = 2;
-                        4'b1011 :
-                            phase_change = -2;
-                        4'b1111 :
-                            phase_change = 0;
-                        default :
-                            ;
-                    endcase
-                
-                if (new_phase + phase_change <= 0)
-                    new_phase = 0;
-                else if (new_phase + phase_change > 139)
-                    new_phase = 139;
-                else
-                    new_phase = new_phase + phase_change;
-                phase <= new_phase;
-		//$display("phase %x (%d) new_phase %x (%d) phase_change %x (%d)",phase,phase,new_phase,new_phase,phase_change,phase_change);
+                phase1 <= (NEXT_PHASE(motor_phase1, phase1));
+                phase2 <= (NEXT_PHASE(motor_phase2, phase2));
             end
         end
     end
     
-    assign TRACK = phase[7:2];
+    assign TRACK1 = phase1[7:2];
+    assign TRACK2 = phase2[7:2];
     
     // Dual-ported RAM holding the contents of the track
-    //  track_storage : process (CLK_14M)
-    //  begin
-    //    if rising_edge(CLK_14M) then
-    //      if ram_we = '1' then
-    //        track_memory(to_integer(ram_write_addr)) <= ram_di;
-    //      end if;
-    //      ram_do <= track_memory(to_integer(track_byte_addr(14 downto 1)));
+    //track_storage : process (CLK_14M)
+    //begin
+    //  if rising_edge(CLK_14M) then
+    //    if ram_we = '1' then
+    //      track_memory(to_integer(ram_write_addr)) <= ram_di;
     //    end if;
-    //  end process;
+    //    ram_do <= track_memory(to_integer(track_byte_addr(14 downto 1)));
+    //  end if;
+    //end process;
+    
+    
     always @(negedge PHASE_ZERO)
-    begin
-	    write_disk_out<=1'b0; 
-	    if (write_disk_out) $display("PZTRACK (%x) WRITE  track addr %x data %x",TRACK, track_byte_addr[14:1],floppy_write_data);
-	    if (write_disk) floppy_write_data_out<=floppy_write_data;
-	    if (write_disk) write_disk_out<=1'b1; 
-	    if (write_disk) write_disk_addr<=track_byte_addr[14:1]; 
-	    /*if (write_disk | read_disk)
-	    begin
-                    if (track_byte_addr == 15'h33FE)
-                        track_byte_addr <= 15'b0;
-                    else
-                        track_byte_addr <= track_byte_addr + 'd1;
-
-	    end
-	    */
+    begin: write_logic
+        
+        begin
+            write_disk_out <= 1'b0;
+            if (write_disk == 1'b1)
+            begin
+                floppy_write_data_out <= floppy_write_data;
+                write_disk_out <= 1'b1;
+                write_disk_addr <= track_byte_addr[14:1];
+            end
+        end
     end
-
-    /*
-    always @(posedge CLK_14M)
-    begin
-	    //if (read_disk) $display("TRACK (%x) read disk %x ram_do %x track addr %x",TRACK,read_disk,ram_do, track_byte_addr[14:1]);
-	    if (write_disk) $display("TRACK (%x) WRITE  track addr %x data %x",TRACK, track_byte_addr[14:1],floppy_write_data);
-	    //if (IO_SELECT) $display("disk_ii IO_SELECT");
-	    //if (DEVICE_SELECT) $display("disk_ii DEVICE_SELECT");
-    end 
-    */
-    assign DISK_FD_WRITE_DISK = write_disk_out;
-    assign DISK_FD_READ_DISK = read_disk;
-    assign DISK_FD_TRACK_ADDR = write_disk_out ? write_disk_addr : track_byte_addr[14:1];
-    assign ram_do = DISK_FD_DATA_IN;
-    assign DISK_FD_DATA_OUT = floppy_write_data_out;
-
     
     // Go to the next byte when the disk is accessed or if the counter times out
-  
-    always @(posedge CLK_14M )
+    
+    always @(posedge CLK_14M or posedge RESET)
     begin: read_head
         reg [5:0]     byte_delay;		// Accounts for disk spin rate
         if (RESET == 1'b1)
         begin
-            track_byte_addr <= 15'b0;
-            byte_delay = 6'b0;
+            track_byte_addr <= {15{1'b0}};
+            byte_delay = {6{1'b0}};
         end
         else 
         begin
-            CLK_2M_D <= PHASE_ZERO;
-            if (PHASE_ZERO== 1'b1 & CLK_2M_D == 1'b0)
+            PHASE_ZERO_D <= PHASE_ZERO;
+            if (PHASE_ZERO == 1'b1 & PHASE_ZERO_D == 1'b0)
             begin
                 byte_delay = byte_delay - 1;
-                if (((read_disk == 1'b1 || write_disk == 1'b1)&& PHASE_ZERO == 1'b1) || byte_delay == 0)
+                if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) | byte_delay == 0)
                 begin
-                    byte_delay = 6'b0;
-                    if (track_byte_addr == 15'h33FE)
-                        track_byte_addr <= 15'b0;
+                    byte_delay = {6{1'b0}};
+                    if (track_byte_addr == 16'h33FE)
+                        track_byte_addr <= {15{1'b0}};
                     else
-                        track_byte_addr <= track_byte_addr + 'd2;
+                        track_byte_addr <= track_byte_addr + 2;
                 end
             end
         end
     end
     
-   /* 
-    always @(posedge CLK_14M )
-    begin: read_head
-        reg [5:0]     byte_delay;		// Accounts for disk spin rate
-        if (RESET == 1'b1)
-        begin
-            track_byte_addr <= 15'b0;
-            byte_delay = 6'b0;
-        end
-        else 
-        begin
-            CLK_2M_D <= CLK_2M;
-            if (CLK_2M == 1'b1 & CLK_2M_D == 1'b0)
-            begin
-                byte_delay = byte_delay - 1;
-                if (((read_disk == 1'b1 || write_disk == 1'b1)&& PHASE_ZERO == 1'b1))
-                begin
-                    byte_delay = 6'b0;
-                    if (track_byte_addr == 15'h33FE)
-                        track_byte_addr <= 15'b0;
-                    else
-                        track_byte_addr <= track_byte_addr + 'd1;
-                end
-            end
-        end
-    end
-   */ 
-   
-   rom #(8,8,"rtl/roms/diskii.hex") videorom (
+    assign DISK_FD_WRITE_DISK = write_disk_out;
+    assign DISK_FD_READ_DISK = read_disk;
+    assign DISK_FD_TRACK_ADDR = (write_disk_out == 1'b1) ? write_disk_addr : 
+                                track_byte_addr[14:1];
+    assign ram_do = DISK_FD_DATA_IN;
+    assign DISK_FD_DATA_OUT = floppy_write_data_out;
+    
+    
+   rom #(8,8,"rtl/roms/diskii.hex") diskrom (
            .clock(CLK_14M),
            .ce(1'b1),
            .a(A[7:0]),
            .data_out(rom_dout)
    );
-/*
-    disk_ii_rom rom(
-        .addr(A[7:0]),
-        .clk(CLK_14M),
-        .dout(rom_dout)
-    );
-*/
-
- //   assign read_disk = (DEVICE_SELECT == 1'b1 & A[3:0] == 4'hC ) ? 1'b1 : 1'b0;		// C08C
-    assign read_disk = (DEVICE_SELECT == 1'b1 & A[3:0] == 4'hC & ~q7) ? 1'b1 : 1'b0;		// C08C
-    assign write_disk = ( DEVICE_SELECT == 1'b1 & A[3:0] == 4'hC &  q7 ) ? 1'b1 : 1'b0;		// C08C
-//assign write_disk = 1'b0;
-
-
+ 
+    assign read_disk = (DEVICE_SELECT == 1'b1 & A[3:0] == 4'hC & q7 == 1'b0) ? 1'b1 : 		// C08C
+                       1'b0;
+    assign write_disk = (DEVICE_SELECT == 1'b1 & A[3:0] == 4'hC & q7 == 1'b1) ? 1'b1 : 		// C08C
+                        1'b0;
     
     assign D_OUT = (IO_SELECT == 1'b1) ? rom_dout : 
-                   (read_disk == 1'b1 & track_byte_addr[0] == 1'b0) ? DISK_FD_DATA_IN :
-                   (write_disk == 1'b1 & track_byte_addr[0] == 1'b0) ? floppy_write_data:
-		   8'b00000000;
+                   (read_disk == 1'b1 & track_byte_addr[0] == 1'b0) ? ram_do : 
+                   (write_disk == 1'b1 & track_byte_addr[0] == 1'b0) ? floppy_write_data : 
+                   {8{1'b0}};
     
     assign track_addr = track_byte_addr[14:1];
     

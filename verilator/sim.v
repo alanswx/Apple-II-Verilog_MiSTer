@@ -156,7 +156,10 @@ wire	fd_write_disk;
 wire	fd_read_disk;
 wire [13:0] fd_track_addr;
 wire [7:0] fd_data_in;
+wire [7:0] fd_data_in1;
+wire [7:0] fd_data_in2;
 wire [7:0] fd_data_do;
+
 always @(posedge clk_sys) begin
 	//if (soft_reset) $display("soft_reset %x",soft_reset);
 end
@@ -191,12 +194,17 @@ apple2_top apple2_top
 
 	.mb_enabled(1'b1),
 
-	.TRACK(track),
+	.TRACK1(track1),
+	.TRACK2(track2),
 	.DISK_RAM_ADDR({track_sec, sd_buff_addr}),
 	.DISK_TRACK_ADDR(),
 	.DISK_RAM_DI(sd_buff_dout),
 	.DISK_RAM_DO(/*sd_buff_din[0]*/),
 	.DISK_RAM_WE(sd_buff_wr & sd_ack[0]),
+
+	.DISK_ACT_1(fd_disk_1),
+
+	.DISK_ACT_2(fd_disk_2),
 
 
 
@@ -225,7 +233,6 @@ apple2_top apple2_top
 	.ram_we(ram_we),
 	.ram_aux(ram_aux),
 
-	.DISK_ACT(led),
 
 	.UART_TXD(UART_TXD),
 	.UART_RXD(UART_RXD),
@@ -269,10 +276,24 @@ always @(posedge clk_sys) begin
 	end
 end
 
-assign sd_rd = { 8'b0, sd_rd_hd,sd_rd_fdd };
-assign sd_wr = { 8'b0, sd_wr_hd,sd_wr_fdd };
-wire sd_rd_fdd;
-wire sd_wr_fdd;
+wire  [5:0] track1;
+wire  [5:0] track2;
+reg   [3:0] track_sec;
+wire         cpu_wait_fdd = cpu_wait_fdd1|cpu_wait_fdd2;
+wire         cpu_wait_fdd1;
+wire         cpu_wait_fdd2;
+
+
+assign sd_rd = { 7'b0, sd_rd_fdd_b,sd_rd_hd,sd_rd_fdd_a };
+assign sd_wr = { 7'b0, sd_wr_fdd_b,sd_wr_hd,sd_wr_fdd_a };
+assign fd_data_in = fd_disk_1 ? fd_data_in1 : fd_disk_2 ? fd_data_in2 : 8'hFF;
+wire fd_disk_1;
+wire fd_disk_2;
+wire sd_rd_fdd_a;
+wire sd_wr_fdd_a;
+wire sd_rd_fdd_b;
+wire sd_wr_fdd_b;
+
 
 reg  hdd_mounted = 0;
 wire hdd_read;
@@ -332,24 +353,21 @@ end
 
 
 
-wire  [5:0] track;
-reg   [3:0] track_sec;
-reg         cpu_wait_fdd = 0;
-
 
 
 track_loader track_loader_a
 (
     .clk(clk_sys),
     .reset(reset),
+    .active(fd_disk_1),
     .lba_fdd(sd_lba[0]),
-    .track(track),
+    .track(track1),
     .img_mounted(img_mounted[0]),
     .img_size(img_size),
-    .cpu_wait_fdd(cpu_wait_fdd),
+    .cpu_wait_fdd(cpu_wait_fdd1),
     .sd_ack(sd_ack[0]),
-    .sd_rd(sd_rd_fdd),
-    .sd_wr(sd_wr_fdd),
+    .sd_rd(sd_rd_fdd_a),
+    .sd_wr(sd_wr_fdd_a),
     .sd_buff_addr(sd_buff_addr),
     .sd_buff_wr(sd_buff_wr),
     .sd_buff_dout(sd_buff_dout),
@@ -357,8 +375,34 @@ track_loader track_loader_a
     .fd_track_addr(fd_track_addr),
     .fd_write_disk(fd_write_disk),
     .fd_data_do(fd_data_do),
-    .fd_data_in(fd_data_in)
+    .fd_data_in(fd_data_in1)
 );
+
+track_loader track_loader_b
+
+(
+    .clk(clk_sys),
+    .reset(reset),
+    .active(fd_disk_2),
+    .lba_fdd(sd_lba[2]),
+    .track(track2),
+    .img_mounted(img_mounted[2]),
+    .img_size(img_size),
+    .cpu_wait_fdd(cpu_wait_fdd2),
+    .sd_ack(sd_ack[2]),
+    .sd_rd(sd_rd_fdd_b),
+    .sd_wr(sd_wr_fdd_b),
+    .sd_buff_addr(sd_buff_addr),
+    .sd_buff_wr(sd_buff_wr),
+    .sd_buff_dout(sd_buff_dout),
+    .sd_buff_din(sd_buff_din[2]),
+    .fd_track_addr(fd_track_addr),
+    .fd_write_disk(fd_write_disk),
+    .fd_data_do(fd_data_do),
+    .fd_data_in(fd_data_in2)
+);
+
+
 
 
 

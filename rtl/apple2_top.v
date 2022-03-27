@@ -43,16 +43,19 @@ module apple2_top(
     joy,
     joy_an,
     mb_enabled,
-    TRACK,
+    TRACK1,
+    TRACK2,
     DISK_RAM_ADDR,
     DISK_RAM_DI,
     DISK_RAM_DO,
     DISK_RAM_WE,
-    DISK_ACT,
+
     DISK_TRACK_ADDR,
     DISK_FD_WRITE_DISK,
     DISK_FD_READ_DISK,
     DISK_FD_TRACK_ADDR,
+    DISK_ACT_1,
+    DISK_ACT_2,
     DISK_FD_DATA_IN,
     DISK_FD_DATA_OUT,
     FLOPPY_ADDRESS,
@@ -110,12 +113,14 @@ module apple2_top(
     input         mb_enabled;
     
     // disk control
-    output [5:0]  TRACK;
+    output [5:0]  TRACK1;
+    output [5:0]  TRACK2;
     input [12:0]  DISK_RAM_ADDR;
     input [7:0]   DISK_RAM_DI;
     output [7:0]  DISK_RAM_DO;
     input         DISK_RAM_WE;
-    output        DISK_ACT;
+    output        DISK_ACT_1;
+    output        DISK_ACT_2;
     output [13:0] DISK_TRACK_ADDR;
     
     output        DISK_FD_WRITE_DISK;
@@ -224,9 +229,6 @@ module apple2_top(
     reg [22:0]    flash_clk;
     reg           power_on_reset;
     reg           reset;
-    
-    wire          D1_ACTIVE;
-    wire          D2_ACTIVE;
     
     wire [17:0]   a_ram;
     
@@ -397,10 +399,11 @@ module apple2_top(
         .A(ADDR),
         .D_IN(D),
         .D_OUT(DISK_DO),
-        .TRACK(TRACK),
+        .TRACK1(TRACK1),
+        .TRACK2(TRACK2),
         .track_addr(DISK_TRACK_ADDR),
-        .D1_ACTIVE(D1_ACTIVE),
-        .D2_ACTIVE(D2_ACTIVE),
+        .D1_ACTIVE(DISK_ACT_1),
+        .D2_ACTIVE(DISK_ACT_2),
         
         .ram_write_addr(DISK_RAM_ADDR),
         .ram_di(DISK_RAM_DI),
@@ -430,7 +433,6 @@ module apple2_top(
 */
 
     
-    assign DISK_ACT = D1_ACTIVE | D2_ACTIVE;
     assign DISK_RAM_DO = {8{1'b0}};
     
 
