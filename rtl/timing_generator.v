@@ -65,6 +65,7 @@ wire HBL; wire VBL;
   assign RASRISE1 = RAS_N == 1'b1 && PHI0 == 1'b0 && Q3 == 1'b0 ? 1'b1 : 1'b0;
   assign GR2_G = GR2 & DHIRES_MODE;
   // The main clock signal generator
+
   always @(posedge CLK_14M) begin
     COLOR_REF <= CLK_7M ^ COLOR_REF;
     CLK_7M <=  ~CLK_7M;

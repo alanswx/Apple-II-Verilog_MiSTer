@@ -384,7 +384,8 @@ module disk_ii(
             if (PHASE_ZERO == 1'b1 & PHASE_ZERO_D == 1'b0)
             begin
                 byte_delay = byte_delay - 1;
-                if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) | byte_delay == 0)
+                //if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) | byte_delay == 0)
+                if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) )
                 begin
                     byte_delay = {6{1'b0}};
                     if (track_byte_addr == 16'h33FE)

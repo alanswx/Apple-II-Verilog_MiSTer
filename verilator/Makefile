@@ -68,6 +68,7 @@ V_SRC = \
 		$(RTL)/apple2_top.v  \
 		$(RTL)/apple2.v  \
 		$(RTL)/gfloppy.v  \
+		$(RTL)/track_loader.v  \
 		$(RTL)/keyboard.v 
 
 
