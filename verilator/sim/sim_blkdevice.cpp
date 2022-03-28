@@ -73,7 +73,7 @@ void SimBlockDevice::BeforeEval(int cycles)
          *sd_buff_addr = bytecnt++;
          *sd_buff_wr= 1;
          //printf("cycles %x reading %X : %X ack %x\n",cycles,*sd_buff_addr,*sd_buff_dout,*sd_ack );
-      } else if(writing && *sd_buff_addr != bytecnt && (bytecnt < kBLKSZ)) {
+      } else if(writing && *sd_buff_addr != bytecnt && (*sd_buff_addr< kBLKSZ)) {
       //} else if(writing && (bytecnt < kBLKSZ)) {
   	//printf("writing disk %i at sd_buff_addr %x data %x ack %x\n",i,*sd_buff_addr,*sd_buff_din[i],*sd_ack);
         disk[i].put(*(sd_buff_din[i]));
@@ -81,12 +81,18 @@ void SimBlockDevice::BeforeEval(int cycles)
       } else {
 	  *sd_buff_wr=0;
 
-        if(bytecnt != kBLKSZ) {
-		if (writing) {
-			  bytecnt++;
-		}
-        } else {
-          reading = writing = 0;
+	  if (writing) {
+		  if (bytecnt>=kBLKSZ) {
+			  writing=0;
+			  //printf("writing stopped: bytecnt %x sd_buff_addr %x \n",bytecnt,*sd_buff_addr);
+		  }
+		  if (bytecnt<kBLKSZ)
+		  	bytecnt++;
+	  }
+	  else if (reading) {
+        	if(bytecnt == kBLKSZ) {
+         	 	reading = 0;
+        	} 
         }
       }
     } else {
@@ -103,12 +109,12 @@ fprintf(stderr,"mounting.. %d\n",i);
 fprintf(stderr,"img_size .. %ld\n",*img_size);
            disk[i].seekg(0);
            bitset(*img_mounted,i);
-           //ack_delay=1200;
+           ack_delay=1200;
     } else if (ack_delay==1 && bitcheck(*img_mounted,i) ) {
 fprintf(stderr,"mounting flag cleared  %d\n",i);
         bitclear(*img_mounted,i) ;
         //*img_size = 0;
-    }
+    } else { if (!reading && !writing && ack_delay>0) ack_delay--; }
 
     // start reading when sd_rd pulses high
     if ((current_disk==-1 || current_disk==i) && (bitcheck(*sd_rd,i) || bitcheck(*sd_wr,i) )) {
@@ -128,6 +134,7 @@ fprintf(stderr,"mounting flag cleared  %d\n",i);
         disk[i].seekg((lba) * kBLKSZ);
         printf("seek %06X lba: (%x) (%d,%d) drive %d reading %d writing %d ack %x\n", (lba) * kBLKSZ,lba,lba,kBLKSZ,i,reading,writing,*sd_ack);
         bytecnt = 0;
+        *sd_buff_addr = 0;
         ack_delay = 1200;
       }
     }
