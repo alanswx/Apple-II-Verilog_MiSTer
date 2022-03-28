@@ -164,7 +164,7 @@ int verilate() {
 		if (soft_reset_time==initialReset) {
 			top->soft_reset = 0; 
 			fprintf(stderr,"turning off %x\n",top->soft_reset);
-			fprintf(stderr,"soft_reset_time %d initialReset %x\n",soft_reset_time,initialReset);
+			fprintf(stderr,"soft_reset_time %ld initialReset %x\n",soft_reset_time,initialReset);
 		} 
 
 		// Assert reset during startup
@@ -429,7 +429,7 @@ int main(int argc, char** argv, char** env) {
 		ImGui::SliderFloat("Zoom", &vga_scale, 1, 8); ImGui::SameLine();
 		ImGui::SliderInt("Rotate", &video.output_rotate, -1, 1); ImGui::SameLine();
 		ImGui::Checkbox("Flip V", &video.output_vflip);
-		ImGui::Text("main_time: %d frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
+		ImGui::Text("main_time: %ld frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
 		//ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
 
 		// Draw VGA output

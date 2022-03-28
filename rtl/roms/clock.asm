@@ -2,9 +2,7 @@
 ;Clock Card
 ;
 
-ZERO =        $00
-
-; Slot 4 IO locations
+; Slot x IO locations
 YEAR_TENS =     $C082
 YEAR_ONES =     $C083
 MONTH_TENS =    $C084
@@ -44,19 +42,25 @@ READ_TIME
         php
         sei
         STA                     ROMSOFF
+        lda                     $C089   ; for some reason on prodos 1.0.1 ROM was swapped out
         lda                     $C089
-        lda                     $C089
-        jsr                     $FF58
+        jsr                     $FF58   ; JSR to the ROM, and we will get the stack back
         tsx
-        lda                     $0100,X
+        lda                     $0100,X ; load the slot prefix into the A
         plp
         and                     #$07
-        asl
+        asl                             ; rotate slot prefix into $S0 (left 4 times)
         asl
         asl
         asl
         tax                              ;X will be $S0 for memory locations
-        ; restore
+
+	; create a comma delimited string for prodos at 200 - first we put the commas in
+        ; format: mo,da,dt,hr,mn
+        ; it looks like we can have ,sec at the end
+        ;mo is the month (01 = January...12 = December) da is the day of the week (00 = Sunday...06 = Saturday) dt is the date (00 through 31) hr is the hour (00 through 23) mn is the minute (00 through 59)
+	; from: https://prodos8.com/docs/techref/adding-routines-to-prodos/
+
 
         lda  #','+$80
         sta  $0202
@@ -98,11 +102,11 @@ READ_TIME
         sta  $020F
         lda  SEC_ONES,X
         ora  #$80
-        sta  $020D
+        sta  $0210
         lda  #$8D			; carrage return
-        sta  $020E
+        sta  $0211
         ldx  #$0E
-	lda			$C08B
+	lda			$C08B    ; turn ROM back off for prodos 1.0.1 ?
 	lda			$C08B
         pla
         rts

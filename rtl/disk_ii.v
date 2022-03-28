@@ -118,6 +118,7 @@ module disk_ii(
     reg           q6;
     reg           q7;
     reg           PHASE_ZERO_D;
+    reg           CLK_2M_D;
     reg           write_disk_out;
     reg [13:0]    write_disk_addr;
     reg [7:0]     floppy_write_data_out;
@@ -376,20 +377,26 @@ module disk_ii(
         if (RESET == 1'b1)
         begin
             track_byte_addr <= {15{1'b0}};
-            byte_delay = {6{1'b0}};
+            byte_delay <= 6'b0;
         end
         else 
         begin
+	       CLK_2M_D <= CLK_2M;
+      	if (CLK_2M == 1'b1 & CLK_2M_D == 1'b0)
+	begin
+        	byte_delay <= byte_delay - 1'b1;
+	end
+
             PHASE_ZERO_D <= PHASE_ZERO;
             if (PHASE_ZERO == 1'b1 & PHASE_ZERO_D == 1'b0)
             begin
-                byte_delay = byte_delay - 1;
-                //if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) | byte_delay == 0)
-                if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) )
+                //byte_delay <= byte_delay - 1;
+                if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) | byte_delay == 0)
+                //if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) )
                 begin
-                    byte_delay = {6{1'b0}};
+                    byte_delay <= 6'b0;
                     if (track_byte_addr == 16'h33FE)
-                        track_byte_addr <= {15{1'b0}};
+                        track_byte_addr <= 15'b0;
                     else
                         track_byte_addr <= track_byte_addr + 2;
                 end
