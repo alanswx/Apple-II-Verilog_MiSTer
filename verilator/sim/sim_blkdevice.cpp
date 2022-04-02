@@ -65,6 +65,8 @@ void SimBlockDevice::BeforeEval(int cycles)
  for (int i=0; i<kVDNUM;i++)
  {
 
+//fprintf(stderr,"current_disk = %d *sd_rd %x ack_delay %x reading %d writing %d\n",current_disk,*sd_rd,ack_delay,reading,writing);
+
     if (current_disk == i) {
     // send data
     if (ack_delay==1) {
@@ -119,7 +121,7 @@ fprintf(stderr,"mounting flag cleared  %d\n",i);
     // start reading when sd_rd pulses high
     if ((current_disk==-1 || current_disk==i) && (bitcheck(*sd_rd,i) || bitcheck(*sd_wr,i) )) {
        // set current disk here..
-//fprintf(stderr,"setting current disk %d %x\n",i,*sd_rd);
+//fprintf(stderr,"setting current disk %d %x ack_delay %x\n",i,*sd_rd,ack_delay);
        current_disk=i;
       if (!ack_delay) {
         int lba = *(sd_lba[i]);
@@ -149,6 +151,8 @@ fprintf(stderr,"mounting flag cleared  %d\n",i);
       }
       if((ack_delay > 1) || ((ack_delay == 1) && !reading && !writing))
         ack_delay--;
+      if (ack_delay==0 && !reading && !writing) 
+	current_disk=-1;
     }
   }
 }

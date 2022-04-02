@@ -248,6 +248,7 @@ int main(int argc, char** argv, char** env) {
 	// hookup blk device
 	blockdevice.sd_lba[0] = &top->sd_lba[0];
 	blockdevice.sd_lba[1] = &top->sd_lba[1];
+	blockdevice.sd_lba[2] = &top->sd_lba[2];
 	blockdevice.sd_rd = &top->sd_rd;
 	blockdevice.sd_wr = &top->sd_wr;
 	blockdevice.sd_ack = &top->sd_ack;
@@ -255,6 +256,7 @@ int main(int argc, char** argv, char** env) {
 	blockdevice.sd_buff_dout= &top->sd_buff_dout;
 	blockdevice.sd_buff_din[0]= &top->sd_buff_din[0];
 	blockdevice.sd_buff_din[1]= &top->sd_buff_din[1];
+	blockdevice.sd_buff_din[2]= &top->sd_buff_din[2];
 	blockdevice.sd_buff_wr= &top->sd_buff_wr;
 	blockdevice.img_mounted= &top->img_mounted;
 	blockdevice.img_readonly= &top->img_readonly;
@@ -304,7 +306,7 @@ int main(int argc, char** argv, char** env) {
 
         //bus.QueueDownload("floppy.nib",1,0);
 	blockdevice.MountDisk("floppy.nib",0);
-	//blockdevice.MountDisk("floppy2.nib",2);
+	blockdevice.MountDisk("floppy2.nib",2);
 	//blockdevice.MountDisk("hd.hdv",1);
 
 #ifdef WIN32

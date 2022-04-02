@@ -94,13 +94,13 @@ module emu (
 	input [7:0]		ioctl_index,
 	output reg		ioctl_wait=1'b0,
 
-	output [31:0] 		sd_lba[2],
+	output [31:0] 		sd_lba[3],
 	output [9:0] 		sd_rd,
 	output [9:0] 		sd_wr,
 	input [9:0] 		sd_ack,
 	input [8:0] 		sd_buff_addr,
 	input [7:0] 		sd_buff_dout,
-	output [7:0] 		sd_buff_din[2],
+	output [7:0] 		sd_buff_din[3],
 	input 			sd_buff_wr,
 	input [9:0] 		img_mounted,
 	input 			img_readonly,
@@ -403,6 +403,9 @@ track_loader track_loader_b
 );
 
 
+always @(posedge clk_sys) begin
+	if (cpu_wait_fdd) $display("cpu_wait_fdd1 %x cpu_wait_fdd2 %x ",cpu_wait_fdd1,cpu_wait_fdd2);
+end
 
 
 
