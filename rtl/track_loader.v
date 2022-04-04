@@ -1,4 +1,4 @@
-module track_loader (
+module track_loader #( parameter drive_num= 0) (
 	input         clk,
 	input         reset,
 	input         active,
@@ -47,6 +47,12 @@ always @(posedge clk) begin
 
         fd_dirty<=floppy_track_dirty;
 
+	
+	if (fd_write_disk & active)
+	begin
+		$display("%x WRITE: fd_track_addr %x fd_data_do %x ",drive_num,fd_track_addr,fd_data_do);
+	end
+
 	if (fd_dirty==0 && floppy_track_dirty==1 && fd_write_disk) begin
 		fd_track_addr_base<=fd_track_addr;
 
@@ -61,7 +67,7 @@ always @(posedge clk) begin
         old_ack <= sd_ack;
         fdd_mounted <= fdd_mounted | img_mounted;
 
-        if (fd_write_disk)
+        if (fd_write_disk & active)
         begin
                 floppy_track_dirty<=1;
 		fd_track_addr_high<=fd_track_addr;
@@ -70,7 +76,7 @@ always @(posedge clk) begin
 
 	if (floppy_track_dirty && (fd_track_addr_high - fd_track_addr_base == 'h160))
 	begin
-		$display("FLUSH");
+		$display("FLUSH %x",drive_num);
 		flush<=1;
 	end
 
@@ -90,7 +96,7 @@ always @(posedge clk) begin
                         if(disk_size>0) begin
                                 if (floppy_track_dirty)
                                 begin
-                                        $display("THIS TRACK HAS CHANGES cur_track %x track %x",cur_track,track);
+                                        $display("%x THIS TRACK HAS CHANGES cur_track %x track %x",drive_num,cur_track,track);
                                         track_sec <= 0;
                                         floppy_track_dirty<=0;
                                         lba_fdd <= 13 * cur_track;
@@ -131,8 +137,10 @@ always @(posedge clk) begin
                                 lba_fdd <= lba_fdd + 1'd1;
                         end else if(old_ack & ~sd_ack) begin
                                 track_sec <= track_sec + 1'd1;
-                                if(~sd_rd) state <= 2'b0;
-                                cpu_wait_fdd <= 0;
+				if(~sd_rd) begin
+				       	state <= 2'b0;
+                                	cpu_wait_fdd <= 0;
+				end
                         end
                 end
         endcase
@@ -152,7 +160,7 @@ bram #(8,14) floppy_dpram_onetrack
 
         .clock_b(clk),
         .address_b(fd_track_addr),
-        .wren_b(fd_write_disk), 
+        .wren_b(fd_write_disk & active), 
         .data_b(fd_data_do),
         .q_b(fd_data_in)
 );

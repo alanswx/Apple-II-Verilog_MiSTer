@@ -318,10 +318,10 @@ module apple2_top(
     assign ram_di = (reset_cold == 1'b0) ? D : 8'b00000000;
    
 
-    assign PD = (IO_SELECT[1] == 1'b1 | DEVICE_SELECT[1] == 1'b1) ? CLOCK_DO : 
+    assign PD = //(IO_SELECT[1] == 1'b1 | DEVICE_SELECT[1] == 1'b1) ? CLOCK_DO : 
                 (IO_SELECT[7] == 1'b1 | DEVICE_SELECT[7] == 1'b1) ? HDD_DO : 
                 (IO_SELECT[6] == 1'b1 | DEVICE_SELECT[6] == 1'b1) ? DISK_DO : 
-                (IO_SELECT[2] == 1'b1 | DEVICE_SELECT[2] == 1'b1 | SSC_ROM_EN == 1'b1) ? SSC_DO : 		// AJS turn on port
+                //(IO_SELECT[2] == 1'b1 | DEVICE_SELECT[2] == 1'b1 | SSC_ROM_EN == 1'b1) ? SSC_DO : 		// AJS turn on port
                 DISK_DO;
     
     
@@ -340,8 +340,8 @@ module apple2_top(
         .aux(ram_aux),
         .PD(PD),
         .CPU_WE(cpu_we),
-        .IRQ_n(psg_irq_n & ssc_irq_n),
-        .NMI_n(psg_nmi_n),
+        .IRQ_n(1/*psg_irq_n & ssc_irq_n*/),
+        .NMI_n(1/*psg_nmi_n*/),
         .ram_we(we_ram),
         .VIDEO(VIDEO),
         .COLOR_LINE(COLOR_LINE),
@@ -435,7 +435,7 @@ module apple2_top(
     
     assign DISK_RAM_DO = {8{1'b0}};
     
-
+`ifdef NO
     hdd hdd(
         .CLK_14M(CLK_14M),
         .PHASE_ZERO(PHASE_ZERO),
@@ -517,7 +517,7 @@ module apple2_top(
 	.RTC(RTC)
      );
       
-
+     `endif
 
     assign audio[6:0] = 7'b0;
     assign audio[9:8] = 2'b0;

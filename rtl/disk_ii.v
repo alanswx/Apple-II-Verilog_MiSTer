@@ -141,7 +141,9 @@ module disk_ii(
     // This makes it look to the software like new data is constantly
     // being read into the shift register, which indicates the data is
     // not yet ready.
-    reg [14:0]    track_byte_addr;
+    reg [14:0]    track_byte_addr_1;
+    reg [14:0]    track_byte_addr_2;
+    wire [14:0]    track_byte_addr = D1_ACTIVE ? track_byte_addr_1 : track_byte_addr_2;
     wire          read_disk;		// When C08C accessed
     wire          write_disk;
     reg           select_d;
@@ -250,8 +252,8 @@ module disk_ii(
         begin
             if (RESET == 1'b1)
             begin
-                motor_phase1 <= {4{1'b0}};
-                motor_phase2 <= {4{1'b0}};
+                motor_phase1 <= 4'b0;
+                motor_phase2 <= 4'b0;
                 drive_on <= 1'b0;
                 drive2_select <= 1'b0;
                 q6 <= 1'b0;
@@ -266,9 +268,9 @@ module disk_ii(
                     if (A[3] == 1'b0)		// C080 - C087
                     begin
                         if (drive2_select == 1'b0)
-                            motor_phase1[(A[2:1])] <= A[0];
+                            motor_phase1[A[2:1]] <= A[0];
                         else
-                            motor_phase2[(A[2:1])] <= A[0];
+                            motor_phase2[A[2:1]] <= A[0];
                     end
                     else
                         case (A[2:1])
@@ -317,15 +319,11 @@ module disk_ii(
     
     always @(posedge CLK_14M)
     begin
-	    if (read_disk) $display("drive_on %x drive_2_select %x D1_ACTIVE %x TRACK1 %x D2_ACTIVE %x TRACK2 %x",drive_on,drive2_select,D1_ACTIVE,TRACK1,D2_ACTIVE,TRACK2);
+	    //if (read_disk) $display("drive_on %x drive_2_select %x D1_ACTIVE %x TRACK1 %x D2_ACTIVE %x TRACK2 %x",drive_on,drive2_select,D1_ACTIVE,TRACK1,D2_ACTIVE,TRACK2);
     end
     
     always @(posedge CLK_14M)
     begin: update_phase
-        integer       phase_change;
-        integer       new_phase;
-        reg [3:0]     rel_phase;
-        
         begin
             if (RESET == 1'b1)
             begin
@@ -365,7 +363,12 @@ module disk_ii(
                 floppy_write_data_out <= floppy_write_data;
                 write_disk_out <= 1'b1;
                 write_disk_addr <= track_byte_addr[14:1];
+		$display("%x TRACK (%x) WRITE track addr %x data %x",D2_ACTIVE,D1_ACTIVE?TRACK1:TRACK2,track_byte_addr[14:1],floppy_write_data);
             end
+	    else if (read_disk == 1'b1)
+	    begin
+		$display("%x TRACK (%x) READ track addr %x data %x",D2_ACTIVE,D1_ACTIVE?TRACK1:TRACK2,track_byte_addr[14:1],DISK_FD_DATA_IN);
+	    end
         end
     end
     
@@ -373,33 +376,51 @@ module disk_ii(
     
     always @(posedge CLK_14M or posedge RESET)
     begin: read_head
-        reg [5:0]     byte_delay;		// Accounts for disk spin rate
+        reg [5:0]     byte_delay_1;		// Accounts for disk spin rate
+        reg [5:0]     byte_delay_2;		// Accounts for disk spin rate
         if (RESET == 1'b1)
         begin
-            track_byte_addr <= {15{1'b0}};
-            byte_delay <= 6'b0;
+            track_byte_addr_1 <= 15'b0;
+            track_byte_addr_2 <= 15'b0;
+            byte_delay_1 <= 6'b0;
+            byte_delay_2 <= 6'b0;
         end
         else 
         begin
 	       CLK_2M_D <= CLK_2M;
       	if (CLK_2M == 1'b1 & CLK_2M_D == 1'b0)
 	begin
-        	byte_delay <= byte_delay - 1'b1;
+		if (D1_ACTIVE)
+        		byte_delay_1 <= byte_delay_1 - 1'b1;
+		else
+        		byte_delay_2 <= byte_delay_2 - 1'b1;
 	end
 
             PHASE_ZERO_D <= PHASE_ZERO;
             if (PHASE_ZERO == 1'b1 & PHASE_ZERO_D == 1'b0)
             begin
-                //byte_delay <= byte_delay - 1;
-                if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) | byte_delay == 0)
+		if (D1_ACTIVE) 
+		begin
+                	if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) | byte_delay_1 == 0)
                 //if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) )
-                begin
-                    byte_delay <= 6'b0;
-                    if (track_byte_addr == 16'h33FE)
-                        track_byte_addr <= 15'b0;
-                    else
-                        track_byte_addr <= track_byte_addr + 2;
-                end
+                	begin
+                    		byte_delay_1 <= 6'b0;
+                    		if (track_byte_addr_1 == 16'h33FE)
+                        		track_byte_addr_1 <= 15'b0;
+                    		else
+                        		track_byte_addr_1 <= track_byte_addr_1 + 2;
+		    	end
+		end
+		else begin
+                	if (((read_disk == 1'b1 | write_disk == 1'b1) & PHASE_ZERO == 1'b1) | byte_delay_2 == 0)
+                	begin
+                    		byte_delay_2 <= 6'b0;
+                    		if (track_byte_addr_2 == 16'h33FE)
+                        		track_byte_addr_2 <= 15'b0;
+                    		else
+                        		track_byte_addr_2 <= track_byte_addr_2 + 2;
+		    	end
+		end
             end
         end
     end
@@ -427,7 +448,7 @@ module disk_ii(
     assign D_OUT = (IO_SELECT == 1'b1) ? rom_dout : 
                    (read_disk == 1'b1 & track_byte_addr[0] == 1'b0) ? ram_do : 
                    (write_disk == 1'b1 & track_byte_addr[0] == 1'b0) ? floppy_write_data : 
-                   {8{1'b0}};
+                   8'b0;
     
     assign track_addr = track_byte_addr[14:1];
     

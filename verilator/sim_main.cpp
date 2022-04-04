@@ -31,7 +31,7 @@ using namespace std;
 // ------------------
 int initialReset = 48;
 bool run_enable = 1;
-int batchSize = 150000;
+int batchSize = 650000;
 bool single_step = 0;
 bool multi_step = 0;
 int multi_step_amount = 1024;
@@ -350,7 +350,7 @@ int main(int argc, char** argv, char** env) {
 		if (ImGui::Button("Stop running")) { run_enable = 0; } ImGui::SameLine();
 		ImGui::Checkbox("RUN", &run_enable);
 		//ImGui::PopItemWidth();
-		ImGui::SliderInt("Run batch size", &batchSize, 1, 250000);
+		ImGui::SliderInt("Run batch size", &batchSize, 1, 1750000);
 		if (single_step == 1) { single_step = 0; }
 		if (ImGui::Button("Single Step")) { run_enable = 0; single_step = 1; }
 		ImGui::SameLine();

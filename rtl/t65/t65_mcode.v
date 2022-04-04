@@ -230,105 +230,105 @@ module T65_MCode(
                     P[Flag_Z];
     
     
-    always @(IR or MCycle or P or Branch or Mode or Rdy_mod)
+    always @(*)
     begin
-        LCycle <= Cycle_1;
-        Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
-        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_PBR;
-        Write_Data <= T_Write_Data_Write_Data_DL;
-        Jump <= {2{1'b0}};
-        BAAdd <= 2'b00;
-        BAQuirk <= 2'b00;
-        BreakAtNA <= 1'b0;
-        ADAdd <= 1'b0;
-        PCAdd <= 1'b0;
-        Inc_S <= 1'b0;
-        Dec_S <= 1'b0;
-        LDA <= 1'b0;
-        LDP <= 1'b0;
-        LDX <= 1'b0;
-        LDY <= 1'b0;
-        LDS <= 1'b0;
-        LDDI <= 1'b0;
-        LDALU <= 1'b0;
-        LDAD <= 1'b0;
-        LDBAL <= 1'b0;
-        LDBAH <= 1'b0;
-        SaveP <= 1'b0;
-        Write <= 1'b0;
-        AddY <= 1'b0;
-        ALUmore <= 1'b0;
+        LCycle = Cycle_1;
+        Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
+        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_PBR;
+        Write_Data = T_Write_Data_Write_Data_DL;
+        Jump = 2'b0;
+        BAAdd = 2'b00;
+        BAQuirk = 2'b00;
+        BreakAtNA = 1'b0;
+        ADAdd = 1'b0;
+        PCAdd = 1'b0;
+        Inc_S = 1'b0;
+        Dec_S = 1'b0;
+        LDA = 1'b0;
+        LDP = 1'b0;
+        LDX = 1'b0;
+        LDY = 1'b0;
+        LDS = 1'b0;
+        LDDI = 1'b0;
+        LDALU = 1'b0;
+        LDAD = 1'b0;
+        LDBAL = 1'b0;
+        LDBAH = 1'b0;
+        SaveP = 1'b0;
+        Write = 1'b0;
+        AddY = 1'b0;
+        ALUmore = 1'b0;
         
         case (IR[7:5])
             3'b100 :		// covers $8x,$9x
                 case (IR[1:0])
                     2'b00 :		// IR: $80,$84,$88,$8C,$90,$94,$98,$9C
                         begin
-                            Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_Y;
+                            Set_BusA_To = T_Set_BusA_To_Set_BusA_To_Y;
                             if (IR[4:2] == 3'b111)		//  SYA ($9C)
                             begin
                                 if (Rdy_mod == 1'b0)
-                                    Write_Data <= T_Write_Data_Write_Data_YB;
+                                    Write_Data = T_Write_Data_Write_Data_YB;
                                 else
-                                    Write_Data <= T_Write_Data_Write_Data_Y;
+                                    Write_Data = T_Write_Data_Write_Data_Y;
                             end
                             else
-                                Write_Data <= T_Write_Data_Write_Data_Y;
+                                Write_Data = T_Write_Data_Write_Data_Y;
                         end
                     2'b10 :		// IR: $82,$86,$8A,$8E,$92,$96,$9A,$9E
                         begin
-                            Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_X;
+                            Set_BusA_To = T_Set_BusA_To_Set_BusA_To_X;
                             if (IR[4:2] == 3'b111)		//  SXA ($9E)
                             begin
                                 if (Rdy_mod == 1'b0)
-                                    Write_Data <= T_Write_Data_Write_Data_XB;
+                                    Write_Data = T_Write_Data_Write_Data_XB;
                                 else
-                                    Write_Data <= T_Write_Data_Write_Data_X;
+                                    Write_Data = T_Write_Data_Write_Data_X;
                             end
                             else
-                                Write_Data <= T_Write_Data_Write_Data_X;
+                                Write_Data = T_Write_Data_Write_Data_X;
                         end
                     2'b11 :		// IR: $83,$87,$8B,$8F,$93,$97,$9B,$9F
                         begin
                             if (IR[4:2] == 3'b110)		//  SHS ($9B)
                             begin
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_AAX;
-                                LDS <= 1'b1;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_AAX;
+                                LDS = 1'b1;
                             end
                             else
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
                             if (IR[4:2] == 3'b111 | IR[4:2] == 3'b110 | IR[4:2] == 3'b100)		//  SHA ($9F, $93), SHS ($9B)
                             begin
                                 if (Rdy_mod == 1'b0)
-                                    Write_Data <= T_Write_Data_Write_Data_AXB;
+                                    Write_Data = T_Write_Data_Write_Data_AXB;
                                 else
-                                    Write_Data <= T_Write_Data_Write_Data_AX;
+                                    Write_Data = T_Write_Data_Write_Data_AX;
                             end
                             else
-                                Write_Data <= T_Write_Data_Write_Data_AX;
+                                Write_Data = T_Write_Data_Write_Data_AX;
                         end
                     default :		// IR: $81,$85,$89,$8D,$91,$95,$99,$9D
-                        Write_Data <= T_Write_Data_Write_Data_ABC;
+                        Write_Data = T_Write_Data_Write_Data_ABC;
                 endcase
             3'b101 :		// covers $Ax,$Bx
                 begin
-                    Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_DI;
+                    Set_BusA_To = T_Set_BusA_To_Set_BusA_To_DI;
                     case (IR[1:0])
                         2'b00 :		// IR: $A0,$A4,$A8,$AC,$B0,$B4,$B8,$BC
                             if (IR[4] != 1'b1 | IR[2] != 1'b0)		//only for $A0,$A4,$A8,$AC or $B4,$BC
-                                LDY <= 1'b1;
+                                LDY = 1'b1;
                         2'b01 :		// IR: $A1,$A5,$A9,$AD,$B1,$B5,$B9,$BD
-                            LDA <= 1'b1;
+                            LDA = 1'b1;
                         2'b10 :		// IR: $A2,$A6,$AA,$AE,$B2,$B6,$BA,$BE
-                            LDX <= 1'b1;
+                            LDX = 1'b1;
                         default :		// IR: $A3,$A7,$AB,$AF,$B3,$B7,$BB,$BF (undoc)
                             begin
-                                LDX <= 1'b1;
-                                LDA <= 1'b1;
+                                LDX = 1'b1;
+                                LDA = 1'b1;
                                 if (IR[4:2] == 3'b110)		//  LAS (BB)
                                 begin
-                                    Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_S;
-                                    LDS <= 1'b1;
+                                    Set_BusA_To = T_Set_BusA_To_Set_BusA_To_S;
+                                    LDS = 1'b1;
                                 end
                             end
                     endcase
@@ -338,22 +338,22 @@ module T65_MCode(
                     2'b00 :		// IR: $C0,$C4,$C8,$CC,$D0,$D4,$D8,$DC
                         begin
                             if (IR[4] == 1'b0)		//only for $Cx
-                                LDY <= 1'b1;
-                            Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_Y;
+                                LDY = 1'b1;
+                            Set_BusA_To = T_Set_BusA_To_Set_BusA_To_Y;
                         end
                     default :		// IR: $C1,$C5,$C9,$CD,$D1,$D5,$D9,$DD, $C2,$C6,$CA,$CE,$D2,$D6,$DA,$DE, $C3,$C7,$CB,$CF,$D3,$D7,$DB,$DF
-                        Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
+                        Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
                 endcase
             3'b111 :		// covers $Ex,$Fx
                 case (IR[1:0])
                     2'b00 :		// IR: $E0,$E4,$E8,$EC,$F0,$F4,$F8,$FC
                         begin
                             if (IR[4] == 1'b0)		// only $Ex
-                                LDX <= 1'b1;
-                            Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_X;
+                                LDX = 1'b1;
+                            Set_BusA_To = T_Set_BusA_To_Set_BusA_To_X;
                         end
                     default :		// IR: $E1,$E5,$E9,$ED,$F1,$F5,$F9,$FD, $E2,$E6,$EA,$EE,$F2,$F6,$FA,$FE, $E3,$E7,$EB,$EF,$F3,$F7,$FB,$FF
-                        Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
+                        Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
                 endcase
             default :
                 ;
@@ -362,9 +362,9 @@ module T65_MCode(
         if (IR[7:6] != 2'b10 & IR[1] == 1'b1 & (Mode == 2'b00 | IR[0] == 1'b0))		//covers $0x-$7x, $Cx-$Fx x=2,3,6,7,A,B,E,F, for 6502 undocs
         begin
             if (IR == 8'heb)
-                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;		// alternate SBC ($EB)
+                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;		// alternate SBC ($EB)
             else
-                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_DI;
+                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_DI;
         end
         
         case (IR[4:0])
@@ -379,203 +379,203 @@ module T65_MCode(
                     8'h00 :
                         begin
                             // BRK ($00)
-                            LCycle <= Cycle_6;
+                            LCycle = Cycle_6;
                             case (MCycle)
                                 Cycle_1 :
                                     begin
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
-                                        Write_Data <= T_Write_Data_Write_Data_PCH;
-                                        Write <= 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
+                                        Write_Data = T_Write_Data_Write_Data_PCH;
+                                        Write = 1'b1;
                                     end
                                 Cycle_2 :
                                     begin
-                                        Dec_S <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
-                                        Write_Data <= T_Write_Data_Write_Data_PCL;
-                                        Write <= 1'b1;
+                                        Dec_S = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
+                                        Write_Data = T_Write_Data_Write_Data_PCL;
+                                        Write = 1'b1;
                                     end
                                 Cycle_3 :
                                     begin
-                                        Dec_S <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
-                                        Write_Data <= T_Write_Data_Write_Data_P;
-                                        Write <= 1'b1;
+                                        Dec_S = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
+                                        Write_Data = T_Write_Data_Write_Data_P;
+                                        Write = 1'b1;
                                     end
                                 Cycle_4 :
                                     begin
-                                        Dec_S <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                        Dec_S = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                                     end
                                 Cycle_5 :
                                     begin
-                                        LDDI <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                        LDDI = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                                     end
                                 Cycle_6 :
-                                    Jump <= 2'b10;
+                                    Jump = 2'b10;
                                 default :
                                     ;
                             endcase
                         end
                     8'h20 :		// JSR ($20)
                         begin
-                            LCycle <= Cycle_5;
+                            LCycle = Cycle_5;
                             case (MCycle)
                                 Cycle_1 :
                                     begin
-                                        Jump <= 2'b01;
-                                        LDDI <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
+                                        Jump = 2'b01;
+                                        LDDI = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
                                     end
                                 Cycle_2 :
                                     begin
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
-                                        Write_Data <= T_Write_Data_Write_Data_PCH;
-                                        Write <= 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
+                                        Write_Data = T_Write_Data_Write_Data_PCH;
+                                        Write = 1'b1;
                                     end
                                 Cycle_3 :
                                     begin
-                                        Dec_S <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
-                                        Write_Data <= T_Write_Data_Write_Data_PCL;
-                                        Write <= 1'b1;
+                                        Dec_S = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
+                                        Write_Data = T_Write_Data_Write_Data_PCL;
+                                        Write = 1'b1;
                                     end
                                 Cycle_4 :
-                                    Dec_S <= 1'b1;
+                                    Dec_S = 1'b1;
                                 Cycle_5 :
-                                    Jump <= 2'b10;
+                                    Jump = 2'b10;
                                 default :
                                     ;
                             endcase
                         end
                     8'h40 :		// RTI ($40)
                         begin
-                            LCycle <= Cycle_5;
+                            LCycle = Cycle_5;
                             case (MCycle)
                                 Cycle_1 :
-                                    Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
+                                    Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
                                 Cycle_2 :
                                     begin
-                                        Inc_S <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
+                                        Inc_S = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
                                     end
                                 Cycle_3 :
                                     begin
-                                        Inc_S <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
-                                        Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_DI;
+                                        Inc_S = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
+                                        Set_BusA_To = T_Set_BusA_To_Set_BusA_To_DI;
                                     end
                                 Cycle_4 :
                                     begin
-                                        LDP <= 1'b1;
-                                        Inc_S <= 1'b1;
-                                        LDDI <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
+                                        LDP = 1'b1;
+                                        Inc_S = 1'b1;
+                                        LDDI = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
                                     end
                                 Cycle_5 :
-                                    Jump <= 2'b10;
+                                    Jump = 2'b10;
                                 default :
                                     ;
                             endcase
                         end
                     8'h60 :		// RTS ($60)
                         begin
-                            LCycle <= Cycle_5;
+                            LCycle = Cycle_5;
                             case (MCycle)
                                 Cycle_1 :
-                                    Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
+                                    Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
                                 Cycle_2 :
                                     begin
-                                        Inc_S <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
+                                        Inc_S = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
                                     end
                                 Cycle_3 :
                                     begin
-                                        Inc_S <= 1'b1;
-                                        LDDI <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
+                                        Inc_S = 1'b1;
+                                        LDDI = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
                                     end
                                 Cycle_4 :
-                                    Jump <= 2'b10;
+                                    Jump = 2'b10;
                                 Cycle_5 :
-                                    Jump <= 2'b01;
+                                    Jump = 2'b01;
                                 default :
                                     ;
                             endcase
                         end
                     8'h08, 8'h48, 8'h5a, 8'hda :		// PHP, PHA, PHY*, PHX*  ($08,$48,$5A,$DA)
                         begin
-                            LCycle <= Cycle_2;
+                            LCycle = Cycle_2;
                             if (Mode == 2'b00 & IR[1] == 1'b1)		//2 cycle nop
-                                LCycle <= Cycle_1;
+                                LCycle = Cycle_1;
                             case (MCycle)
                                 Cycle_1 :
                                     if (Mode != 2'b00 | IR[1] == 1'b0)		//wrong on 6502
                                     begin
-                                        Write <= 1'b1;
+                                        Write = 1'b1;
                                         case (IR[7:4])
                                             4'b0000 :
-                                                Write_Data <= T_Write_Data_Write_Data_P;
+                                                Write_Data = T_Write_Data_Write_Data_P;
                                             4'b0100 :
-                                                Write_Data <= T_Write_Data_Write_Data_ABC;
+                                                Write_Data = T_Write_Data_Write_Data_ABC;
                                             4'b0101 :
                                                 if (Mode != 2'b00)
-                                                    Write_Data <= T_Write_Data_Write_Data_Y;
+                                                    Write_Data = T_Write_Data_Write_Data_Y;
                                                 else
-                                                    Write <= 1'b0;
+                                                    Write = 1'b0;
                                             4'b1101 :
                                                 if (Mode != 2'b00)
-                                                    Write_Data <= T_Write_Data_Write_Data_X;
+                                                    Write_Data = T_Write_Data_Write_Data_X;
                                                 else
-                                                    Write <= 1'b0;
+                                                    Write = 1'b0;
                                             default :
                                                 ;
                                         endcase
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
                                     end
                                 Cycle_2 :
-                                    Dec_S <= 1'b1;
+                                    Dec_S = 1'b1;
                                 default :
                                     ;
                             endcase
                         end
                     8'h28, 8'h68, 8'h7a, 8'hfa :		// PLP, PLA, PLY*, PLX* ($28,$68,$7A,$FA)
                         begin
-                            LCycle <= Cycle_3;
+                            LCycle = Cycle_3;
                             if (Mode == 2'b00 & IR[1] == 1'b1)		//2 cycle nop
-                                LCycle <= Cycle_1;
+                                LCycle = Cycle_1;
                             case (IR[7:4])
                                 4'b0010 :		//plp
-                                    LDP <= 1'b1;
+                                    LDP = 1'b1;
                                 4'b0110 :		//pla
-                                    LDA <= 1'b1;
+                                    LDA = 1'b1;
                                 4'b0111 :		//ply not for 6502
                                     if (Mode != 2'b00)
-                                        LDY <= 1'b1;
+                                        LDY = 1'b1;
                                 4'b1111 :		//plx not for 6502
                                     if (Mode != 2'b00)
-                                        LDX <= 1'b1;
+                                        LDX = 1'b1;
                                 default :
                                     ;
                             endcase
                             case (MCycle)
                                 Cycle_sync :
                                     if (Mode != 2'b00 | IR[1] == 1'b0)		//wrong on 6502
-                                        SaveP <= 1'b1;
+                                        SaveP = 1'b1;
                                 Cycle_1 :
                                     if (Mode != 2'b00 | IR[1] == 1'b0)		//wrong on 6502
                                     begin
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
-                                        LDP <= 1'b0;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
+                                        LDP = 1'b0;
                                     end
                                 Cycle_2 :
                                     begin
-                                        Inc_S <= 1'b1;
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_SP;
-                                        LDP <= 1'b0;
+                                        Inc_S = 1'b1;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_SP;
+                                        LDP = 1'b0;
                                     end
                                 Cycle_3 :
-                                    Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_DI;
+                                    Set_BusA_To = T_Set_BusA_To_Set_BusA_To_DI;
                                 default :
                                     ;
                             endcase
@@ -586,30 +586,30 @@ module T65_MCode(
                             Cycle_sync :
                                 ;
                             Cycle_1 :
-                                Jump <= 2'b01;
+                                Jump = 2'b01;
                             default :
                                 ;
                         endcase
                     8'h88 :		// DEY ($88)
                         begin
-                            LDY <= 1'b1;
+                            LDY = 1'b1;
                             case (MCycle)
                                 Cycle_sync :
                                     ;
                                 Cycle_1 :
-                                    Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_Y;
+                                    Set_BusA_To = T_Set_BusA_To_Set_BusA_To_Y;
                                 default :
                                     ;
                             endcase
                         end
                     8'hca :		// DEX ($CA)
                         begin
-                            LDX <= 1'b1;
+                            LDX = 1'b1;
                             case (MCycle)
                                 Cycle_sync :
                                     ;
                                 Cycle_1 :
-                                    Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_X;
+                                    Set_BusA_To = T_Set_BusA_To_Set_BusA_To_X;
                                 default :
                                     ;
                             endcase
@@ -617,22 +617,22 @@ module T65_MCode(
                     8'h1a, 8'h3a :		// INC*, DEC* ($1A,$3A)
                         begin
                             if (Mode != 2'b00)
-                                LDA <= 1'b1;		// A
+                                LDA = 1'b1;		// A
                             else
-                                LCycle <= Cycle_1;		//undoc 2 cycle nop
+                                LCycle = Cycle_1;		//undoc 2 cycle nop
                             case (MCycle)
                                 Cycle_sync :
                                     ;
                                 Cycle_1 :
-                                    Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_S;
+                                    Set_BusA_To = T_Set_BusA_To_Set_BusA_To_S;
                                 default :
                                     ;
                             endcase
                         end
                     8'h0a, 8'h2a, 8'h4a, 8'h6a :		// ASL, ROL, LSR, ROR ($0A,$2A,$4A,$6A)
                         begin
-                            LDA <= 1'b1;		// A
-                            Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
+                            LDA = 1'b1;		// A
+                            Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
                             case (MCycle)
                                 Cycle_sync :
                                     ;
@@ -644,7 +644,7 @@ module T65_MCode(
                         end
                     8'h8a, 8'h98 :		// TYA, TXA ($8A,$98)
                         begin
-                            LDA <= 1'b1;
+                            LDA = 1'b1;
                             case (MCycle)
                                 Cycle_sync :
                                     ;
@@ -659,20 +659,20 @@ module T65_MCode(
                             Cycle_sync :
                                 ;
                             Cycle_1 :
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
                             default :
                                 ;
                         endcase
                     8'h9a :		// TXS ($9A)
-                        LDS <= 1'b1;		// will be set only in Cycle_sync
+                        LDS = 1'b1;		// will be set only in Cycle_sync
                     8'hba :		// TSX ($BA)
                         begin
-                            LDX <= 1'b1;
+                            LDX = 1'b1;
                             case (MCycle)
                                 Cycle_sync :
                                     ;
                                 Cycle_1 :
-                                    Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_S;
+                                    Set_BusA_To = T_Set_BusA_To_Set_BusA_To_S;
                                 default :
                                     ;
                             endcase
@@ -682,7 +682,7 @@ module T65_MCode(
                             Cycle_sync :
                                 ;
                             Cycle_1 :
-                                Jump <= 2'b01;
+                                Jump = 2'b01;
                             default :
                                 ;
                         endcase
@@ -700,56 +700,56 @@ module T65_MCode(
             5'b00001, 5'b00011 :
                 begin
                     // Zero Page Indexed Indirect (d,x)
-                    LCycle <= Cycle_5;
+                    LCycle = Cycle_5;
                     if (IR[7:6] != 2'b10)		// ($01,$21,$41,$61,$C1,$E1,$03,$23,$43,$63,$C3,$E3)
                     begin
-                        LDA <= 1'b1;
+                        LDA = 1'b1;
                         if (Mode == 2'b00 & IR[1] == 1'b1)
-                            LCycle <= Cycle_7;
+                            LCycle = Cycle_7;
                     end
                     case (MCycle)
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDAD <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                Jump = 2'b01;
+                                LDAD = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_2 :
                             begin
-                                ADAdd <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                ADAdd = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_3 :
                             begin
-                                BAAdd <= 2'b01;
-                                LDBAL <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                BAAdd = 2'b01;
+                                LDBAL = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_4 :
                             begin
-                                LDBAH <= 1'b1;
+                                LDBAH = 1'b1;
                                 if (IR[7:5] == 3'b100)
-                                    Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                    Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_5 :
                             if (Mode == 2'b00 & IR[1] == 1'b1 & IR[7:6] != 2'b10)
                             begin
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
-                                Write <= 1'b1;
-                                LDDI <= 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
+                                Write = 1'b1;
+                                LDDI = 1'b1;
                             end
                         Cycle_6 :
                             begin
-                                Write <= 1'b1;
-                                LDALU <= 1'b1;
-                                SaveP <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                Write = 1'b1;
+                                LDALU = 1'b1;
+                                SaveP = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_7 :
                             begin
-                                ALUmore <= 1'b1;
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
+                                ALUmore = 1'b1;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
                             end
                         default :
                             ;
@@ -761,10 +761,10 @@ module T65_MCode(
                 begin
                     // Immediate
                     if (IR[7:5] != 3'b100)		// all except undoc. NOP imm2 (not $89)
-                        LDA <= 1'b1;
+                        LDA = 1'b1;
                     case (MCycle)
                         Cycle_1 :
-                            Jump <= 2'b01;
+                            Jump = 2'b01;
                         default :
                             ;
                     endcase
@@ -778,30 +778,30 @@ module T65_MCode(
                     case (IR[7:5])
                         3'b010, 3'b011, 3'b000, 3'b001 :		//ALR,ARR
                             begin
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_DA;
-                                LDA <= 1'b1;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_DA;
+                                LDA = 1'b1;
                             end
                         3'b100 :		//XAA
                             begin
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_DAX;
-                                LDA <= 1'b1;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_DAX;
+                                LDA = 1'b1;
                             end
                         3'b110 :		//SAX (SBX)
                             begin
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_AAX;
-                                LDX <= 1'b1;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_AAX;
+                                LDX = 1'b1;
                             end
                         3'b101 :		//OAL
                             begin
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_DAO;
-                                LDA <= 1'b1;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_DAO;
+                                LDA = 1'b1;
                             end
                         default :
-                            LDA <= 1'b1;
+                            LDA = 1'b1;
                     endcase
                     case (MCycle)
                         Cycle_1 :
-                            Jump <= 2'b01;
+                            Jump = 2'b01;
                         default :
                             ;
                     endcase
@@ -818,12 +818,12 @@ module T65_MCode(
                         if (IR == 8'b10100010)
                         begin
                             // LDX ($A2)
-                            Jump <= 2'b01;
-                            LDX <= 1'b1;		// Moved, Lorenz test showed X changing on SKB (NOPx)
+                            Jump = 2'b01;
+                            LDX = 1'b1;		// Moved, Lorenz test showed X changing on SKB (NOPx)
                         end
                         else if (IR[7:4] == 4'b1000 | IR[7:4] == 4'b1100 | IR[7:4] == 4'b1110)
                             // undoc: NOP imm2
-                            Jump <= 2'b01;
+                            Jump = 2'b01;
                     // KIL !!!
                     default :
                         ;
@@ -833,18 +833,18 @@ module T65_MCode(
             5'b00100 :
                 begin
                     // Zero Page
-                    LCycle <= Cycle_2;
+                    LCycle = Cycle_2;
                     case (MCycle)
                         Cycle_sync :
                             if (IR[7:5] == 3'b001)		//24=BIT zpg
-                                SaveP <= 1'b1;
+                                SaveP = 1'b1;
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDAD <= 1'b1;
+                                Jump = 2'b01;
+                                LDAD = 1'b1;
                                 if (IR[7:5] == 3'b100)		//84=sty zpg (the only write in this group)
-                                    Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                    Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_2 :
                             ;
@@ -861,36 +861,36 @@ module T65_MCode(
                 if (IR[7:6] != 2'b10 & IR[1] == 1'b1 & (Mode == 2'b00 | IR[0] == 1'b0))		//covers 0x-7x,cx-fx x=2,3,6,7,a,b,e,f, for 6502 undocs
                 begin
                     // Read-Modify-Write
-                    LCycle <= Cycle_4;
+                    LCycle = Cycle_4;
                     if (Mode == 2'b00 & IR[0] == 1'b1)
-                        LDA <= 1'b1;
+                        LDA = 1'b1;
                     case (MCycle)
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDAD <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                Jump = 2'b01;
+                                LDAD = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_2 :
                             begin
-                                LDDI <= 1'b1;
+                                LDDI = 1'b1;
                                 if (Mode == 2'b00)		//The old 6500 writes back what is just read, before changing. The 65c does another read
-                                    Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                    Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_3 :
                             begin
-                                LDALU <= 1'b1;
-                                SaveP <= 1'b1;
-                                Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                LDALU = 1'b1;
+                                SaveP = 1'b1;
+                                Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_4 :
                             if (Mode == 2'b00 & IR[0] == 1'b1)
                             begin
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
-                                ALUmore <= 1'b1;		// For undoc DCP/DCM support
-                                LDDI <= 1'b1;		// requires DIN to reflect DOUT!
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
+                                ALUmore = 1'b1;		// For undoc DCP/DCM support
+                                LDDI = 1'b1;		// requires DIN to reflect DOUT!
                             end
                         default :
                             ;
@@ -898,19 +898,19 @@ module T65_MCode(
                 end
                 else
                 begin
-                    LCycle <= Cycle_2;
+                    LCycle = Cycle_2;
                     if (IR[7:6] != 2'b10)
-                        LDA <= 1'b1;
+                        LDA = 1'b1;
                     case (MCycle)
                         Cycle_sync :
                             ;
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDAD <= 1'b1;
+                                Jump = 2'b01;
+                                LDAD = 1'b1;
                                 if (IR[7:5] == 3'b100)
-                                    Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                    Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_2 :
                             ;
@@ -926,50 +926,50 @@ module T65_MCode(
                 begin
                     if (IR[5] == 1'b0)
                     begin
-                        LCycle <= Cycle_2;
+                        LCycle = Cycle_2;
                         case (MCycle)
                             Cycle_1 :
                                 begin
-                                    Jump <= 2'b01;
-                                    LDDI <= 1'b1;
+                                    Jump = 2'b01;
+                                    LDDI = 1'b1;
                                 end
                             Cycle_2 :
-                                Jump <= 2'b10;
+                                Jump = 2'b10;
                             default :
                                 ;
                         endcase
                     end
                     else
                     begin
-                        LCycle <= Cycle_4;
+                        LCycle = Cycle_4;
                         case (MCycle)
                             Cycle_1 :
                                 begin
-                                    Jump <= 2'b01;
-                                    LDDI <= 1'b1;
-                                    LDBAL <= 1'b1;
+                                    Jump = 2'b01;
+                                    LDDI = 1'b1;
+                                    LDBAL = 1'b1;
                                 end
                             Cycle_2 :
                                 begin
-                                    LDBAH <= 1'b1;
+                                    LDBAH = 1'b1;
                                     if (Mode != 2'b00)
-                                        Jump <= 2'b10;
+                                        Jump = 2'b10;
                                     if (Mode == 2'b00)
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                                 end
                             Cycle_3 :
                                 begin
-                                    LDDI <= 1'b1;
+                                    LDDI = 1'b1;
                                     if (Mode == 2'b00)
                                     begin
-                                        Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
-                                        BAAdd <= 2'b01;		// DB Inc
+                                        Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
+                                        BAAdd = 2'b01;		// DB Inc
                                     end
                                     else
-                                        Jump <= 2'b01;
+                                        Jump = 2'b01;
                                 end
                             Cycle_4 :
-                                Jump <= 2'b10;
+                                Jump = 2'b10;
                             default :
                                 ;
                         endcase
@@ -977,23 +977,23 @@ module T65_MCode(
                 end
                 else
                 begin
-                    LCycle <= Cycle_3;
+                    LCycle = Cycle_3;
                     case (MCycle)
                         Cycle_sync :
                             if (IR[7:5] == 3'b001)		//2c-BIT
-                                SaveP <= 1'b1;
+                                SaveP = 1'b1;
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDBAL <= 1'b1;
+                                Jump = 2'b01;
+                                LDBAL = 1'b1;
                             end
                         Cycle_2 :
                             begin
-                                Jump <= 2'b01;
-                                LDBAH <= 1'b1;
+                                Jump = 2'b01;
+                                LDBAH = 1'b1;
                                 if (IR[7:5] == 3'b100)		//80, sty, the only write in this group
-                                    Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                    Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_3 :
                             ;
@@ -1010,40 +1010,40 @@ module T65_MCode(
                 if (IR[7:6] != 2'b10 & IR[1] == 1'b1 & (Mode == 2'b00 | IR[0] == 1'b0))		// ($0E,$2E,$4E,$6E,$CE,$EE, $0F,$2F,$4F,$6F,$CF,$EF)
                 begin
                     // Read-Modify-Write
-                    LCycle <= Cycle_5;
+                    LCycle = Cycle_5;
                     if (Mode == 2'b00 & IR[0] == 1'b1)
-                        LDA <= 1'b1;
+                        LDA = 1'b1;
                     case (MCycle)
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDBAL <= 1'b1;
+                                Jump = 2'b01;
+                                LDBAL = 1'b1;
                             end
                         Cycle_2 :
                             begin
-                                Jump <= 2'b01;
-                                LDBAH <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                Jump = 2'b01;
+                                LDBAH = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_3 :
                             begin
-                                LDDI <= 1'b1;
+                                LDDI = 1'b1;
                                 if (Mode == 2'b00)		//The old 6500 writes back what is just read, before changing. The 65c does another read
-                                    Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                    Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_4 :
                             begin
-                                Write <= 1'b1;
-                                LDALU <= 1'b1;
-                                SaveP <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                Write = 1'b1;
+                                LDALU = 1'b1;
+                                SaveP = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_5 :
                             if (Mode == 2'b00 & IR[0] == 1'b1)
                             begin
-                                ALUmore <= 1'b1;		// For undoc DCP/DCM support
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
+                                ALUmore = 1'b1;		// For undoc DCP/DCM support
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
                             end
                         default :
                             ;
@@ -1051,24 +1051,24 @@ module T65_MCode(
                 end
                 else
                 begin
-                    LCycle <= Cycle_3;
+                    LCycle = Cycle_3;
                     if (IR[7:6] != 2'b10)		// all but $8D, $8E, $8F, $AD, $AE, $AF ($AD does set LDA in an earlier case statement)
-                        LDA <= 1'b1;
+                        LDA = 1'b1;
                     case (MCycle)
                         Cycle_sync :
                             ;
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDBAL <= 1'b1;
+                                Jump = 2'b01;
+                                LDBAL = 1'b1;
                             end
                         Cycle_2 :
                             begin
-                                Jump <= 2'b01;
-                                LDBAH <= 1'b1;
+                                Jump = 2'b01;
+                                LDBAH = 1'b1;
                                 if (IR[7:5] == 3'b100)		//8d
-                                    Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                    Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_3 :
                             ;
@@ -1086,11 +1086,11 @@ module T65_MCode(
                     // whether or not the branch is taken and if a page
                     // is crossed...
                     if (Branch == 1'b1)
-                        LCycle <= Cycle_3;		// We're done @ T3 if branching...upper
+                        LCycle = Cycle_3;		// We're done @ T3 if branching...upper
                     else
                         // level logic will stop at T2 if no page cross
                         // (See the Break signal)
-                        LCycle <= Cycle_1;
+                        LCycle = Cycle_1;
                     // This decodes the current microcycle and takes the
                     // proper course of action...
                     case (MCycle)
@@ -1100,9 +1100,9 @@ module T65_MCode(
                         // will be the last microcycle if the branch isn't taken.
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;		// Increments the PC by one (PC will now be PC+2)
+                                Jump = 2'b01;		// Increments the PC by one (PC will now be PC+2)
                                 // from microcycle T0.
-                                LDDI <= 1'b1;		// Tells logic in top level (T65.vhd) to route
+                                LDDI = 1'b1;		// Tells logic in top level (T65.vhd) to route
                             end
                         // the Din bus to the memory data latch (DL)
                         // so that the branch offset is fetched.
@@ -1113,8 +1113,8 @@ module T65_MCode(
                         // T65.vhd level takes care of that...
                         Cycle_2 :
                             begin
-                                Jump <= 2'b11;		// Tell the PC Jump logic to use relative mode.
-                                PCAdd <= 1'b1;		// This tells the PC adder to update itself with
+                                Jump = 2'b11;		// Tell the PC Jump logic to use relative mode.
+                                PCAdd = 1'b1;		// This tells the PC adder to update itself with
                             end
                         // the current offset recently fetched from
                         // memory.
@@ -1133,64 +1133,64 @@ module T65_MCode(
             //     $13,$33,$53,$73,$93,$B3,$D3,$F3
             5'b10001, 5'b10011 :
                 begin
-                    LCycle <= Cycle_5;
+                    LCycle = Cycle_5;
                     if (IR[7:6] != 2'b10)		// ($11,$31,$51,$71,$D1,$F1,$13,$33,$53,$73,$D3,$F3)
                     begin
-                        LDA <= 1'b1;
+                        LDA = 1'b1;
                         if (Mode == 2'b00 & IR[1] == 1'b1)
-                            LCycle <= Cycle_7;
+                            LCycle = Cycle_7;
                     end
                     case (MCycle)
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDAD <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                Jump = 2'b01;
+                                LDAD = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_2 :
                             begin
-                                LDBAL <= 1'b1;
-                                BAAdd <= 2'b01;		// DB Inc
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                LDBAL = 1'b1;
+                                BAAdd = 2'b01;		// DB Inc
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_3 :
                             begin
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_Y;
-                                BAAdd <= 2'b10;		// BA Add
-                                LDBAH <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_Y;
+                                BAAdd = 2'b10;		// BA Add
+                                LDBAH = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_4 :
                             begin
-                                BAAdd <= 2'b11;		// BA Adj
+                                BAAdd = 2'b11;		// BA Adj
                                 if (IR[7:5] == 3'b100)
                                 begin
-                                    Write <= 1'b1;
+                                    Write = 1'b1;
                                     if (IR[3:0] == 4'h3)
-                                        BAQuirk <= 2'b10;		// COPY
+                                        BAQuirk = 2'b10;		// COPY
                                 end
                                 else if (IR[1] == 1'b0 | IR == 8'hB3)		// Dont do this on $x3, except undoc LAXiy $B3 (says real CPU and Lorenz tests)
-                                    BreakAtNA <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                    BreakAtNA = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_5 :
                             if (Mode == 2'b00 & IR[1] == 1'b1 & IR[7:6] != 2'b10)
                             begin
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
-                                LDDI <= 1'b1;
-                                Write <= 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
+                                LDDI = 1'b1;
+                                Write = 1'b1;
                             end
                         Cycle_6 :
                             begin
-                                LDALU <= 1'b1;
-                                SaveP <= 1'b1;
-                                Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                LDALU = 1'b1;
+                                SaveP = 1'b1;
+                                Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_7 :
                             begin
-                                ALUmore <= 1'b1;
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
+                                ALUmore = 1'b1;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
                             end
                         default :
                             ;
@@ -1207,41 +1207,41 @@ module T65_MCode(
                 begin
                     // Read-Modify-Write
                     if (Mode == 2'b00 & IR[0] == 1'b1)
-                        LDA <= 1'b1;
-                    LCycle <= Cycle_5;
+                        LDA = 1'b1;
+                    LCycle = Cycle_5;
                     case (MCycle)
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDAD <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                Jump = 2'b01;
+                                LDAD = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_2 :
                             begin
-                                ADAdd <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                ADAdd = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_3 :
                             begin
-                                LDDI <= 1'b1;
+                                LDDI = 1'b1;
                                 if (Mode == 2'b00)		// The old 6500 writes back what is just read, before changing. The 65c does another read
-                                    Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                    Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_4 :
                             begin
-                                LDALU <= 1'b1;
-                                SaveP <= 1'b1;
-                                Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                LDALU = 1'b1;
+                                SaveP = 1'b1;
+                                Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                                 if (Mode == 2'b00 & IR[0] == 1'b1)
-                                    LDDI <= 1'b1;
+                                    LDDI = 1'b1;
                             end
                         Cycle_5 :
                             if (Mode == 2'b00 & IR[0] == 1'b1)
                             begin
-                                ALUmore <= 1'b1;		// For undoc DCP/DCM support
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
+                                ALUmore = 1'b1;		// For undoc DCP/DCM support
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
                             end
                         default :
                             ;
@@ -1249,27 +1249,27 @@ module T65_MCode(
                 end
                 else
                 begin
-                    LCycle <= Cycle_3;
+                    LCycle = Cycle_3;
                     if (IR[7:6] != 2'b10 & IR[0] == 1'b1)		// dont LDA on undoc skip
-                        LDA <= 1'b1;
+                        LDA = 1'b1;
                     case (MCycle)
                         Cycle_sync :
                             ;
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDAD <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                Jump = 2'b01;
+                                LDAD = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_2 :
                             begin
-                                ADAdd <= 1'b1;
+                                ADAdd = 1'b1;
                                 // Added this check for Y reg. use, added undocs
                                 if (IR[3:1] == 3'b011)		// ($16,$36,$56,$76,$96,$B6,$D6,$F6,$17,$37,$57,$77,$97,$B7,$D7,$F7)
-                                    AddY <= 1'b1;
+                                    AddY = 1'b1;
                                 if (IR[7:5] == 3'b100)		// ($14,$34,$15,$35,$16,$36,$17,$37) the only write instruction
-                                    Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_ZPG;
+                                    Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_ZPG;
                             end
                         Cycle_3 :
                             ;
@@ -1283,58 +1283,58 @@ module T65_MCode(
             5'b11001, 5'b11011 :
                 begin
                     // Absolute Y
-                    LCycle <= Cycle_4;
+                    LCycle = Cycle_4;
                     if (IR[7:6] != 2'b10)
                     begin
-                        LDA <= 1'b1;
+                        LDA = 1'b1;
                         if (Mode == 2'b00 & IR[1] == 1'b1)
-                            LCycle <= Cycle_6;
+                            LCycle = Cycle_6;
                     end
                     case (MCycle)
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDBAL <= 1'b1;
+                                Jump = 2'b01;
+                                LDBAL = 1'b1;
                             end
                         Cycle_2 :
                             begin
-                                Jump <= 2'b01;
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_Y;
-                                BAAdd <= 2'b10;		// BA Add
-                                LDBAH <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                Jump = 2'b01;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_Y;
+                                BAAdd = 2'b10;		// BA Add
+                                LDBAH = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_3 :
                             begin
-                                BAAdd <= 2'b11;		// BA adj
+                                BAAdd = 2'b11;		// BA adj
                                 if (IR[7:5] == 3'b100)		//99/9b
                                 begin
-                                    Write <= 1'b1;
+                                    Write = 1'b1;
                                     if (IR[3:0] == 4'hB)
-                                        BAQuirk <= 2'b01;		// AND
+                                        BAQuirk = 2'b01;		// AND
                                 end
                                 else if (IR[1] == 1'b0 | IR == 8'hBB)		// Dont do this on $xB, except undoc $BB (says real CPU and Lorenz tests)
-                                    BreakAtNA <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                    BreakAtNA = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_4 :		// just for undoc
                             if (Mode == 2'b00 & IR[1] == 1'b1 & IR[7:6] != 2'b10)
                             begin
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
-                                LDDI <= 1'b1;
-                                Write <= 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
+                                LDDI = 1'b1;
+                                Write = 1'b1;
                             end
                         Cycle_5 :
                             begin
-                                Write <= 1'b1;
-                                LDALU <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
-                                SaveP <= 1'b1;
+                                Write = 1'b1;
+                                LDALU = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
+                                SaveP = 1'b1;
                             end
                         Cycle_6 :
                             begin
-                                ALUmore <= 1'b1;
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
+                                ALUmore = 1'b1;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
                             end
                         default :
                             ;
@@ -1350,47 +1350,47 @@ module T65_MCode(
                 if (IR[7:6] != 2'b10 & IR[1] == 1'b1 & (Mode == 2'b00 | IR[0] == 1'b0))		// ($1E,$3E,$5E,$7E,$DE,$FE, $1F,$3F,$5F,$7F,$DF,$FF)
                 begin
                     // Read-Modify-Write
-                    LCycle <= Cycle_6;
+                    LCycle = Cycle_6;
                     if (Mode == 2'b00 & IR[0] == 1'b1)
-                        LDA <= 1'b1;
+                        LDA = 1'b1;
                     case (MCycle)
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDBAL <= 1'b1;
+                                Jump = 2'b01;
+                                LDBAL = 1'b1;
                             end
                         Cycle_2 :
                             begin
-                                Jump <= 2'b01;
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_X;
-                                BAAdd <= 2'b10;		// BA Add
-                                LDBAH <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                Jump = 2'b01;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_X;
+                                BAAdd = 2'b10;		// BA Add
+                                LDBAH = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_3 :
                             begin
-                                BAAdd <= 2'b11;		// BA adj
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                BAAdd = 2'b11;		// BA adj
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_4 :
                             begin
-                                LDDI <= 1'b1;
+                                LDDI = 1'b1;
                                 if (Mode == 2'b00)		//The old 6500 writes back what is just read, before changing. The 65c does another read
-                                    Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                    Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_5 :
                             begin
-                                LDALU <= 1'b1;
-                                SaveP <= 1'b1;
-                                Write <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                LDALU = 1'b1;
+                                SaveP = 1'b1;
+                                Write = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_6 :
                             if (Mode == 2'b00 & IR[0] == 1'b1)
                             begin
-                                ALUmore <= 1'b1;
-                                Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_ABC;
+                                ALUmore = 1'b1;
+                                Set_BusA_To = T_Set_BusA_To_Set_BusA_To_ABC;
                             end
                         default :
                             ;
@@ -1399,50 +1399,50 @@ module T65_MCode(
                 else
                 begin
                     // ($1C,$3C,$5C,$7C,$9C,$BC,$DC,$FC, $1D,$3D,$5D,$7D,$9D,$BD,$DD,$FD, $9E,$BE,$9F,$BF)
-                    LCycle <= Cycle_4;		//Or 3 if not page crossing
+                    LCycle = Cycle_4;		//Or 3 if not page crossing
                     if (IR[7:6] != 2'b10)
                     begin
                         if (Mode != 2'b00 | IR[4] == 1'b0 | IR[1:0] != 2'b00)
-                            LDA <= 1'b1;
+                            LDA = 1'b1;
                     end
                     case (MCycle)
                         Cycle_sync :
                             ;
                         Cycle_1 :
                             begin
-                                Jump <= 2'b01;
-                                LDBAL <= 1'b1;
+                                Jump = 2'b01;
+                                LDBAL = 1'b1;
                             end
                         Cycle_2 :
                             begin
-                                Jump <= 2'b01;
+                                Jump = 2'b01;
                                 // special case $BE which uses Y reg as index!!
                                 if (IR[7:6] == 2'b10 & IR[4:1] == 4'b1111)
-                                    Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_Y;
+                                    Set_BusA_To = T_Set_BusA_To_Set_BusA_To_Y;
                                 else
-                                    Set_BusA_To <= T_Set_BusA_To_Set_BusA_To_X;
-                                BAAdd <= 2'b10;		// BA Add
-                                LDBAH <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                    Set_BusA_To = T_Set_BusA_To_Set_BusA_To_X;
+                                BAAdd = 2'b10;		// BA Add
+                                LDBAH = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_3 :
                             begin
-                                BAAdd <= 2'b11;		// BA adj
+                                BAAdd = 2'b11;		// BA adj
                                 if (IR[7:5] == 3'b100)		// ($9C,$9D,$9E,$9F)
                                 begin
-                                    Write <= 1'b1;
+                                    Write = 1'b1;
                                     case (IR[1:0])
                                         2'b00, 2'b10 :		// AND
-                                            BAQuirk <= 2'b01;
+                                            BAQuirk = 2'b01;
                                         2'b11 :		// COPY
-                                            BAQuirk <= 2'b10;
+                                            BAQuirk = 2'b10;
                                         default :
                                             ;
                                     endcase
                                 end
                                 else
-                                    BreakAtNA <= 1'b1;
-                                Set_Addr_To <= T_Set_Addr_To_Set_Addr_To_BA;
+                                    BreakAtNA = 1'b1;
+                                Set_Addr_To = T_Set_Addr_To_Set_Addr_To_BA;
                             end
                         Cycle_4 :
                             ;
@@ -1468,33 +1468,33 @@ module T65_MCode(
                     3'b000, 3'b001, 3'b011 :
                         case (IR[7:5])
                             3'b110, 3'b111 :		// CP ($C0,$C4,$CC,$E0,$E4,$EC)
-                                ALU_Op <= T_ALU_OP_ALU_OP_CMP;
+                                ALU_Op = T_ALU_OP_ALU_OP_CMP;
                             3'b101 :		// LD ($A0,$A4,$AC)
-                                ALU_Op <= T_ALU_OP_ALU_OP_EQ2;
+                                ALU_Op = T_ALU_OP_ALU_OP_EQ2;
                             3'b001 :		// BIT ($20,$24,$2C - $20 is ignored, as its a jmp)
-                                ALU_Op <= T_ALU_OP_ALU_OP_BIT;
+                                ALU_Op = T_ALU_OP_ALU_OP_BIT;
                             default :		// other, NOP/ST ($x0,$x4,$xC)
-                                ALU_Op <= T_ALU_OP_ALU_OP_EQ1;
+                                ALU_Op = T_ALU_OP_ALU_OP_EQ1;
                         endcase
                     
                     // IR: $08,$28,$48,$68,$88,$A8,$C8,$E8
                     3'b010 :
                         case (IR[7:5])
                             3'b111, 3'b110 :		// IN ($C8,$E8)
-                                ALU_Op <= T_ALU_OP_ALU_OP_INC;
+                                ALU_Op = T_ALU_OP_ALU_OP_INC;
                             3'b100 :		// DEY ($88)
-                                ALU_Op <= T_ALU_OP_ALU_OP_DEC;
+                                ALU_Op = T_ALU_OP_ALU_OP_DEC;
                             default :		// LD
-                                ALU_Op <= T_ALU_OP_ALU_OP_EQ2;
+                                ALU_Op = T_ALU_OP_ALU_OP_EQ2;
                         endcase
                     
                     // IR: $18,$38,$58,$78,$98,$B8,$D8,$F8
                     3'b110 :
                         case (IR[7:5])
                             3'b100 :		// TYA ($98)
-                                ALU_Op <= T_ALU_OP_ALU_OP_EQ2;
+                                ALU_Op = T_ALU_OP_ALU_OP_EQ2;
                             default :
-                                ALU_Op <= T_ALU_OP_ALU_OP_EQ1;
+                                ALU_Op = T_ALU_OP_ALU_OP_EQ1;
                         endcase
                     
                     // IR: $10,$30,$50,$70,$90,$B0,$D0,$F0
@@ -1503,65 +1503,65 @@ module T65_MCode(
                     default :
                         case (IR[7:5])
                             3'b101 :		// LD ($B0,$B4,$BC)
-                                ALU_Op <= T_ALU_OP_ALU_OP_EQ2;
+                                ALU_Op = T_ALU_OP_ALU_OP_EQ2;
                             default :
-                                ALU_Op <= T_ALU_OP_ALU_OP_EQ1;
+                                ALU_Op = T_ALU_OP_ALU_OP_EQ1;
                         endcase
                 endcase
             
             2'b01 :		// OR
                 case (((IR[7:5])))
                     0 :		// IR: $01,$05,$09,$0D,$11,$15,$19,$1D
-                        ALU_Op <= T_ALU_OP_ALU_OP_OR;
+                        ALU_Op = T_ALU_OP_ALU_OP_OR;
                     1 :		// IR: $21,$25,$29,$2D,$31,$35,$39,$3D
-                        ALU_Op <= T_ALU_OP_ALU_OP_AND;
+                        ALU_Op = T_ALU_OP_ALU_OP_AND;
                     2 :		// IR: $41,$45,$49,$4D,$51,$55,$59,$5D
-                        ALU_Op <= T_ALU_OP_ALU_OP_EOR;
+                        ALU_Op = T_ALU_OP_ALU_OP_EOR;
                     3 :		// IR: $61,$65,$69,$6D,$71,$75,$79,$7D
-                        ALU_Op <= T_ALU_OP_ALU_OP_ADC;
+                        ALU_Op = T_ALU_OP_ALU_OP_ADC;
                     4 :		// IR: $81,$85,$89,$8D,$91,$95,$99,$9D
-                        ALU_Op <= T_ALU_OP_ALU_OP_EQ1;		// STA
+                        ALU_Op = T_ALU_OP_ALU_OP_EQ1;		// STA
                     5 :		// IR: $A1,$A5,$A9,$AD,$B1,$B5,$B9,$BD
-                        ALU_Op <= T_ALU_OP_ALU_OP_EQ2;		// LDA
+                        ALU_Op = T_ALU_OP_ALU_OP_EQ2;		// LDA
                     6 :		// IR: $C1,$C5,$C9,$CD,$D1,$D5,$D9,$DD
-                        ALU_Op <= T_ALU_OP_ALU_OP_CMP;
+                        ALU_Op = T_ALU_OP_ALU_OP_CMP;
                     default :		// IR: $E1,$E5,$E9,$ED,$F1,$F5,$F9,$FD
-                        ALU_Op <= T_ALU_OP_ALU_OP_SBC;
+                        ALU_Op = T_ALU_OP_ALU_OP_SBC;
                 endcase
             
             2'b10 :
                 case (((IR[7:5])))
                     0 :		// IR: $02,$06,$0A,$0E,$12,$16,$1A,$1E
                         begin
-                            ALU_Op <= T_ALU_OP_ALU_OP_ASL;
+                            ALU_Op = T_ALU_OP_ALU_OP_ASL;
                             if (IR[4:2] == 3'b110 & Mode != 2'b00)		// 00011010,$1A -> INC acc, not on 6502
-                                ALU_Op <= T_ALU_OP_ALU_OP_INC;
+                                ALU_Op = T_ALU_OP_ALU_OP_INC;
                         end
                     1 :		// IR: $22,$26,$2A,$2E,$32,$36,$3A,$3E
                         begin
-                            ALU_Op <= T_ALU_OP_ALU_OP_ROL;
+                            ALU_Op = T_ALU_OP_ALU_OP_ROL;
                             if (IR[4:2] == 3'b110 & Mode != 2'b00)		// 00111010,$3A -> DEC acc, not on 6502
-                                ALU_Op <= T_ALU_OP_ALU_OP_DEC;
+                                ALU_Op = T_ALU_OP_ALU_OP_DEC;
                         end
                     2 :		// IR: $42,$46,$4A,$4E,$52,$56,$5A,$5E
-                        ALU_Op <= T_ALU_OP_ALU_OP_LSR;
+                        ALU_Op = T_ALU_OP_ALU_OP_LSR;
                     3 :		// IR: $62,$66,$6A,$6E,$72,$76,$7A,$7E
-                        ALU_Op <= T_ALU_OP_ALU_OP_ROR;
+                        ALU_Op = T_ALU_OP_ALU_OP_ROR;
                     4 :		// IR: $82,$86,$8A,$8E,$92,$96,$9A,$9E
                         begin
-                            ALU_Op <= T_ALU_OP_ALU_OP_BIT;
+                            ALU_Op = T_ALU_OP_ALU_OP_BIT;
                             if (IR[4:2] == 3'b010)		// 10001010, $8A -> TXA
-                                ALU_Op <= T_ALU_OP_ALU_OP_EQ2;
+                                ALU_Op = T_ALU_OP_ALU_OP_EQ2;
                             else
                                 // 100xxx10, $82,$86,$8E,$92,$96,$9A,$9E
-                                ALU_Op <= T_ALU_OP_ALU_OP_EQ1;
+                                ALU_Op = T_ALU_OP_ALU_OP_EQ1;
                         end
                     5 :		// IR: $A2,$A6,$AA,$AE,$B2,$B6,$BA,$BE
-                        ALU_Op <= T_ALU_OP_ALU_OP_EQ2;		// LDX
+                        ALU_Op = T_ALU_OP_ALU_OP_EQ2;		// LDX
                     6 :		// IR: $C2,$C6,$CA,$CE,$D2,$D6,$DA,$DE
-                        ALU_Op <= T_ALU_OP_ALU_OP_DEC;
+                        ALU_Op = T_ALU_OP_ALU_OP_DEC;
                     default :		// IR: $E2,$E6,$EA,$EE,$F2,$F6,$FA,$FE
-                        ALU_Op <= T_ALU_OP_ALU_OP_INC;
+                        ALU_Op = T_ALU_OP_ALU_OP_INC;
                 endcase
             
             default :		// "11" undoc double alu ops
@@ -1569,9 +1569,9 @@ module T65_MCode(
                     // IR: $A3,$A7,$AB,$AF,$B3,$B7,$BB,$BF
                     5 :
                         if (IR == 8'hbb)		//LAS
-                            ALU_Op <= T_ALU_OP_ALU_OP_AND;
+                            ALU_Op = T_ALU_OP_ALU_OP_AND;
                         else
-                            ALU_Op <= T_ALU_OP_ALU_OP_EQ2;
+                            ALU_Op = T_ALU_OP_ALU_OP_EQ2;
                     
                     // IR: $03,$07,$0B,$0F,$13,$17,$1B,$1F
                     //     $23,$27,$2B,$2F,$33,$37,$3B,$3F
@@ -1582,54 +1582,54 @@ module T65_MCode(
                     //     $E3,$E7,$EB,$EF,$F3,$F7,$FB,$FF
                     default :
                         if (IR == 8'h6b)		// ARR
-                            ALU_Op <= T_ALU_OP_ALU_OP_ARR;
+                            ALU_Op = T_ALU_OP_ALU_OP_ARR;
                         else if (IR == 8'h8b)		// ARR
-                            ALU_Op <= T_ALU_OP_ALU_OP_XAA;		// we can't use the bit operation as we don't set all flags...
+                            ALU_Op = T_ALU_OP_ALU_OP_XAA;		// we can't use the bit operation as we don't set all flags...
                         else if (IR == 8'h0b | IR == 8'h2b)		// ANC
-                            ALU_Op <= T_ALU_OP_ALU_OP_ANC;
+                            ALU_Op = T_ALU_OP_ALU_OP_ANC;
                         else if (IR == 8'heb)		// alternate SBC
-                            ALU_Op <= T_ALU_OP_ALU_OP_SBC;
+                            ALU_Op = T_ALU_OP_ALU_OP_SBC;
                         else if (ALUmore == 1'b1)
                             case (((IR[7:5])))
                                 0 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_OR;
+                                    ALU_Op = T_ALU_OP_ALU_OP_OR;
                                 1 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_AND;
+                                    ALU_Op = T_ALU_OP_ALU_OP_AND;
                                 2 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_EOR;
+                                    ALU_Op = T_ALU_OP_ALU_OP_EOR;
                                 3 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_ADC;
+                                    ALU_Op = T_ALU_OP_ALU_OP_ADC;
                                 4 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_EQ1;		// STA
+                                    ALU_Op = T_ALU_OP_ALU_OP_EQ1;		// STA
                                 5 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_EQ2;		// LDA
+                                    ALU_Op = T_ALU_OP_ALU_OP_EQ2;		// LDA
                                 6 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_CMP;
+                                    ALU_Op = T_ALU_OP_ALU_OP_CMP;
                                 default :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_SBC;
+                                    ALU_Op = T_ALU_OP_ALU_OP_SBC;
                             endcase
                         else
                             case (((IR[7:5])))
                                 0 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_ASL;
+                                    ALU_Op = T_ALU_OP_ALU_OP_ASL;
                                 1 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_ROL;
+                                    ALU_Op = T_ALU_OP_ALU_OP_ROL;
                                 2 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_LSR;
+                                    ALU_Op = T_ALU_OP_ALU_OP_LSR;
                                 3 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_ROR;
+                                    ALU_Op = T_ALU_OP_ALU_OP_ROR;
                                 4 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_BIT;
+                                    ALU_Op = T_ALU_OP_ALU_OP_BIT;
                                 5 :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_EQ2;		// LDX
+                                    ALU_Op = T_ALU_OP_ALU_OP_EQ2;		// LDX
                                 6 :
                                     begin
-                                        ALU_Op <= T_ALU_OP_ALU_OP_DEC;
+                                        ALU_Op = T_ALU_OP_ALU_OP_DEC;
                                         if (IR[4:2] == 3'b010)		// $6B
-                                            ALU_Op <= T_ALU_OP_ALU_OP_SAX;		// special SAX (SBX) case
+                                            ALU_Op = T_ALU_OP_ALU_OP_SAX;		// special SAX (SBX) case
                                     end
                                 default :
-                                    ALU_Op <= T_ALU_OP_ALU_OP_INC;
+                                    ALU_Op = T_ALU_OP_ALU_OP_INC;
                             endcase
                 endcase
         endcase

@@ -355,7 +355,7 @@ end
 
 
 
-track_loader track_loader_a
+track_loader #(.drive_num('d0)) track_loader_a
 (
     .clk(clk_sys),
     .reset(reset),
@@ -378,7 +378,7 @@ track_loader track_loader_a
     .fd_data_in(fd_data_in1)
 );
 
-track_loader track_loader_b
+track_loader #(.drive_num('d2)) track_loader_b
 
 (
     .clk(clk_sys),
@@ -404,7 +404,7 @@ track_loader track_loader_b
 
 
 always @(posedge clk_sys) begin
-	if (cpu_wait_fdd) $display("cpu_wait_fdd1 %x cpu_wait_fdd2 %x ",cpu_wait_fdd1,cpu_wait_fdd2);
+	//if (cpu_wait_fdd) $display("cpu_wait_fdd1 %x cpu_wait_fdd2 %x ",cpu_wait_fdd1,cpu_wait_fdd2);
 end
 
 

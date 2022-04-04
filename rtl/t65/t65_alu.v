@@ -183,7 +183,7 @@ module T65_ALU(
     reg [7:0]        SBX_Q;
     
     
-    always @(P_In or BusA or BusB)
+    always @(*)
     begin: xhdl0
         reg [6:0]        AL;
         reg [6:0]        AH;
@@ -201,9 +201,9 @@ module T65_ALU(
         // pragma translate_on
         
         if (AL[4:1] == 0 & AH[4:1] == 0)
-            ADC_Z <= 1'b1;
+            ADC_Z = 1'b1;
         else
-            ADC_Z <= 1'b0;
+            ADC_Z = 1'b0;
         
         if (AL[5:1] > 9 & P_In[Flag_D] == 1'b1)
             AL[6:1] = AL[6:1] + 6;
@@ -211,8 +211,8 @@ module T65_ALU(
         C = AL[6] | AL[5];
         AH = {BusA[7:4], C} + {BusB[7:4], 1'b1};
         
-        ADC_N <= AH[4];
-        ADC_V <= (AH[4] ^ BusA[7]) & (~(BusA[7] ^ BusB[7]));
+        ADC_N = AH[4];
+        ADC_V = (AH[4] ^ BusA[7]) & (~(BusA[7] ^ BusB[7]));
         
         // pragma translate_off
         //if (is_x(AH))
@@ -223,13 +223,13 @@ module T65_ALU(
         if (AH[5:1] > 9 & P_In[Flag_D] == 1'b1)
             AH[6:1] = AH[6:1] + 6;
         
-        ADC_C <= AH[6] | AH[5];
+        ADC_C = AH[6] | AH[5];
         
-        ADC_Q <= ({AH[4:1], AL[4:1]});
+        ADC_Q = ({AH[4:1], AL[4:1]});
     end
     
     
-    always @(Op or P_In or BusA or BusB)
+    always @(*)
     begin: xhdl1
         reg [6:0]        AL;
         reg [5:0]        AH;
@@ -260,15 +260,15 @@ module T65_ALU(
         // pragma translate_on
         
         if (AL[4:1] == 0 & AH[4:1] == 0)
-            SBC_Z <= 1'b1;
+            SBC_Z = 1'b1;
         else
-            SBC_Z <= 1'b0;
+            SBC_Z = 1'b0;
         
-        SBC_C <= (~AH[5]);
-        SBC_V <= (AH[4] ^ BusA[7]) & (BusA[7] ^ BusB[7]);
-        SBC_N <= AH[4];
+        SBC_C = (~AH[5]);
+        SBC_V = (AH[4] ^ BusA[7]) & (BusA[7] ^ BusB[7]);
+        SBC_N = AH[4];
         
-        SBX_Q <= ({AH[4:1], AL[4:1]});
+        SBX_Q = ({AH[4:1], AL[4:1]});
         
         if (P_In[Flag_D] == 1'b1)
         begin
@@ -279,17 +279,17 @@ module T65_ALU(
                 AH[5:1] = AH[5:1] - 6;
         end
         
-        SBC_Q <= ({AH[4:1], AL[4:1]});
+        SBC_Q = ({AH[4:1], AL[4:1]});
     end
     
     
-    always @(Op or P_In or BusA or BusB or ADC_Z or ADC_C or ADC_V or ADC_N or ADC_Q or SBC_Z or SBC_C or SBC_V or SBC_N or SBC_Q or SBX_Q)
+    always @(*)
     begin: xhdl2
         reg [7:0]        Q_t;
         reg [7:0]        Q2_t;
         // ORA, AND, EOR, ADC, NOP, LD, CMP, SBC
         // ASL, ROL, LSR, ROR, BIT, LD, DEC, INC
-        P_Out <= P_In;
+        P_Out = P_In;
         Q_t = BusA;
         Q2_t = BusA;
         case (Op)
@@ -301,47 +301,47 @@ module T65_ALU(
                 Q_t = BusA ^ BusB;
             T_ALU_OP_ALU_OP_ADC :
                 begin
-                    P_Out[Flag_V] <= ADC_V;
-                    P_Out[Flag_C] <= ADC_C;
+                    P_Out[Flag_V] = ADC_V;
+                    P_Out[Flag_C] = ADC_C;
                     Q_t = ADC_Q;
                 end
             T_ALU_OP_ALU_OP_CMP :
-                P_Out[Flag_C] <= SBC_C;
+                P_Out[Flag_C] = SBC_C;
             T_ALU_OP_ALU_OP_SAX :
                 begin
-                    P_Out[Flag_C] <= SBC_C;
+                    P_Out[Flag_C] = SBC_C;
                     Q_t = SBX_Q;		// undoc: subtract (A & X) - (immediate)
                 end
             T_ALU_OP_ALU_OP_SBC :
                 begin
-                    P_Out[Flag_V] <= SBC_V;
-                    P_Out[Flag_C] <= SBC_C;
+                    P_Out[Flag_V] = SBC_V;
+                    P_Out[Flag_C] = SBC_C;
                     Q_t = SBC_Q;		// undoc: subtract  (A & X) - (immediate), then decimal correction
                 end
             T_ALU_OP_ALU_OP_ASL :
                 begin
                     Q_t = {BusA[6:0], 1'b0};
-                    P_Out[Flag_C] <= BusA[7];
+                    P_Out[Flag_C] = BusA[7];
                 end
             T_ALU_OP_ALU_OP_ROL :
                 begin
                     Q_t = {BusA[6:0], P_In[Flag_C]};
-                    P_Out[Flag_C] <= BusA[7];
+                    P_Out[Flag_C] = BusA[7];
                 end
             T_ALU_OP_ALU_OP_LSR :
                 begin
                     Q_t = {1'b0, BusA[7:1]};
-                    P_Out[Flag_C] <= BusA[0];
+                    P_Out[Flag_C] = BusA[0];
                 end
             T_ALU_OP_ALU_OP_ROR :
                 begin
                     Q_t = {P_In[Flag_C], BusA[7:1]};
-                    P_Out[Flag_C] <= BusA[0];
+                    P_Out[Flag_C] = BusA[0];
                 end
             T_ALU_OP_ALU_OP_ARR :
                 begin
                     Q_t = {P_In[Flag_C], (BusA[7:1] & BusB[7:1])};
-                    P_Out[Flag_V] <= Q_t[5] ^ Q_t[6];
+                    P_Out[Flag_V] = Q_t[5] ^ Q_t[6];
                     Q2_t = Q_t;
                     if (P_In[Flag_D] == 1'b1)
                     begin
@@ -350,16 +350,16 @@ module T65_ALU(
                         if ((BusA[7:4] & BusB[7:4]) > 4'b0100)
                         begin
                             Q2_t[7:4] = ((Q_t[7:4]) + 4'h6);
-                            P_Out[Flag_C] <= 1'b1;
+                            P_Out[Flag_C] = 1'b1;
                         end
                         else
-                            P_Out[Flag_C] <= 1'b0;
+                            P_Out[Flag_C] = 1'b0;
                     end
                     else
-                        P_Out[Flag_C] <= Q_t[6];
+                        P_Out[Flag_C] = Q_t[6];
                 end
             T_ALU_OP_ALU_OP_BIT :
-                P_Out[Flag_V] <= BusB[6];
+                P_Out[Flag_V] = BusB[6];
             T_ALU_OP_ALU_OP_DEC :
                 Q_t = (BusA - 1);
             T_ALU_OP_ALU_OP_INC :
@@ -372,48 +372,48 @@ module T65_ALU(
         case (Op)
             T_ALU_OP_ALU_OP_ADC :
                 begin
-                    P_Out[Flag_N] <= ADC_N;
-                    P_Out[Flag_Z] <= ADC_Z;
+                    P_Out[Flag_N] = ADC_N;
+                    P_Out[Flag_Z] = ADC_Z;
                 end
             T_ALU_OP_ALU_OP_CMP, T_ALU_OP_ALU_OP_SBC, T_ALU_OP_ALU_OP_SAX :
                 begin
-                    P_Out[Flag_N] <= SBC_N;
-                    P_Out[Flag_Z] <= SBC_Z;
+                    P_Out[Flag_N] = SBC_N;
+                    P_Out[Flag_Z] = SBC_Z;
                 end
             T_ALU_OP_ALU_OP_EQ1 :		//dont touch P
                 ;
             T_ALU_OP_ALU_OP_BIT :
                 begin
-                    P_Out[Flag_N] <= BusB[7];
+                    P_Out[Flag_N] = BusB[7];
                     if ((BusA & BusB) == 8'b00000000)
-                        P_Out[Flag_Z] <= 1'b1;
+                        P_Out[Flag_Z] = 1'b1;
                     else
-                        P_Out[Flag_Z] <= 1'b0;
+                        P_Out[Flag_Z] = 1'b0;
                 end
             T_ALU_OP_ALU_OP_ANC :
                 begin
-                    P_Out[Flag_N] <= Q_t[7];
-                    P_Out[Flag_C] <= Q_t[7];
+                    P_Out[Flag_N] = Q_t[7];
+                    P_Out[Flag_C] = Q_t[7];
                     if (Q_t == 8'b00000000)
-                        P_Out[Flag_Z] <= 1'b1;
+                        P_Out[Flag_Z] = 1'b1;
                     else
-                        P_Out[Flag_Z] <= 1'b0;
+                        P_Out[Flag_Z] = 1'b0;
                 end
             default :
                 begin
-                    P_Out[Flag_N] <= Q_t[7];
+                    P_Out[Flag_N] = Q_t[7];
                     if (Q_t == 8'b00000000)
-                        P_Out[Flag_Z] <= 1'b1;
+                        P_Out[Flag_Z] = 1'b1;
                     else
-                        P_Out[Flag_Z] <= 1'b0;
+                        P_Out[Flag_Z] = 1'b0;
                 end
         endcase
         
         if (Op == T_ALU_OP_ALU_OP_ARR)
             // handled above in ARR code
-            Q <= Q2_t;
+            Q = Q2_t;
         else
-            Q <= Q_t;
+            Q = Q_t;
     end
     
 endmodule

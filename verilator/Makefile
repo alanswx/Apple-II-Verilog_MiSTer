@@ -5,6 +5,9 @@ TOP = --top-module emu
 RTL = ../rtl
 V_INC = +incdir+$(RTL) 
 
+#V_DEFINE = +define+debug=1 +define+SIMULATION=1   -CFLAGS "-I../sim/imgui -I../sim/vinc -I../sim/ -O3"  --timescale-override 1ps/1ps -Wno-TIMESCALEMOD  \
+	-I../rtl \
+	-I../rtl/tv80
 V_DEFINE = +define+debug=1 +define+SIMULATION=1   -CFLAGS "-I../sim/imgui -I../sim/vinc -I../sim/ -O3"  --timescale-override 1ps/1ps -Wno-TIMESCALEMOD  \
 	-I../rtl \
 	-I../rtl/tv80
@@ -48,7 +51,7 @@ CFLAGS += $(CC_OPT) $(CC_DEFINE) -Iimgui
 LDFLAGS = $(LIBS)
 EXE = ./obj_dir/Vemu
 V_OPT = -O3 --x-assign fast --x-initial fast --noassert 
-CC_OPT = -O
+CC_OPT = -O3
 
 V_SRC = \
         sim.v \
@@ -82,7 +85,7 @@ VOUT = obj_dir/Vemu.cpp
 all: $(EXE)
 
 $(VOUT): $(V_SRC)  Makefile
-	$V -cc $(V_OPT) -LDFLAGS "$(LDFLAGS) " -exe --trace --Mdir ./obj_dir $(V_DEFINE) $(V_INC) $(TOP) -CFLAGS $(CFLAGS) $(V_SRC) $(C_SRC)
+	$V -cc $(V_OPT) -LDFLAGS "$(LDFLAGS) " -exe  --Mdir ./obj_dir $(V_DEFINE) $(V_INC) $(TOP) -CFLAGS $(CFLAGS) $(V_SRC) $(C_SRC)
 
 $(EXE): $(VOUT) $(C_SRC)
 #	(cd obj_dir; make OPT="-fauto-inc-dec -fdce -fdefer-pop -fdse -ftree-ccp -ftree-ch -ftree-fre -ftree-dce -ftree-dse" -f Vemu.mk)
