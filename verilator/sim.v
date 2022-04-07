@@ -168,7 +168,7 @@ apple2_top apple2_top
 	.CLK_14M(clk_sys),
 	.CLK_50M(CLK_50M),
 	.CPU_WAIT(cpu_wait_hdd | cpu_wait_fdd),
-	.cpu_type(1'b0), // 0 6502, 1 65C02
+	.cpu_type(1'b1), // 0 6502, 1 65C02
 
 	.reset_cold(reset),
 	.reset_warm(soft_reset),
