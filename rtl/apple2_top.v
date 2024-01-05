@@ -43,23 +43,28 @@ module apple2_top(
     joy,
     joy_an,
     mb_enabled,
-    TRACK1,
-    TRACK2,
-    DISK_RAM_ADDR,
-    DISK_RAM_DI,
-    DISK_RAM_DO,
-    DISK_RAM_WE,
 
-    DISK_TRACK_ADDR,
-    DISK_FD_WRITE_DISK,
-    DISK_FD_READ_DISK,
-    DISK_FD_TRACK_ADDR,
-    DISK_ACT_1,
-    DISK_ACT_2,
-    DISK_FD_DATA_IN,
-    DISK_FD_DATA_OUT,
-    FLOPPY_ADDRESS,
-    FLOPPY_DATA_IN,
+    	TRACK1,
+	TRACK1_ADDR,
+	TRACK1_DI,
+	TRACK1_DO,
+	TRACK1_WE,
+	TRACK1_BUSY,
+	TRACK2,
+	TRACK2_ADDR,
+	TRACK2_DI,
+	TRACK2_DO,
+	TRACK2_WE,
+	TRACK2_BUSY,
+
+	D1_ACTIVE,
+	D2_ACTIVE,
+
+	DISK_ACT,
+
+	DISK_READY,
+
+
     HDD_SECTOR,
     HDD_READ,
     HDD_WRITE,
@@ -111,26 +116,27 @@ module apple2_top(
     
     // mocking board
     input         mb_enabled;
-    
-    // disk control
-    output [5:0]  TRACK1;
-    output [5:0]  TRACK2;
-    input [12:0]  DISK_RAM_ADDR;
-    input [7:0]   DISK_RAM_DI;
-    output [7:0]  DISK_RAM_DO;
-    input         DISK_RAM_WE;
-    output        DISK_ACT_1;
-    output        DISK_ACT_2;
-    output [13:0] DISK_TRACK_ADDR;
-    
-    output        DISK_FD_WRITE_DISK;
-    output        DISK_FD_READ_DISK;
-    output [13:0] DISK_FD_TRACK_ADDR;
-    input [7:0]   DISK_FD_DATA_IN;
-    output [7:0]  DISK_FD_DATA_OUT;
-    
-    output [17:0] FLOPPY_ADDRESS;
-    input  [7:0]  FLOPPY_DATA_IN;
+   
+output [5:0]	TRACK1;
+output [12:0] TRACK1_ADDR;
+output [7:0] 	TRACK1_DI;
+input [7:0]	TRACK1_DO;
+output	TRACK1_WE;
+input	TRACK1_BUSY;
+output [5:0]	TRACK2;
+output [12:0] 	TRACK2_ADDR;
+output [7:0] 	TRACK2_DI;
+input [7:0] 	TRACK2_DO;
+output	TRACK2_WE;
+input	TRACK2_BUSY;
+
+inout	D1_ACTIVE;
+inout	D2_ACTIVE;
+
+output	DISK_ACT;
+
+input[1:0]	DISK_READY;
+
     
     // HDD control
     output [15:0] HDD_SECTOR;
@@ -387,53 +393,39 @@ module apple2_top(
         .K(K),
         .akd(akd)
     );
-    
-    
-    disk_ii disk(
+   
+    assign DISK_ACT = ~(D1_ACTIVE | D2_ACTIVE);
+
+  disk_ii disk_ii (
         .CLK_14M(CLK_14M),
         .CLK_2M(CLK_2M),
         .PHASE_ZERO(PHASE_ZERO),
         .IO_SELECT(IO_SELECT[6]),
         .DEVICE_SELECT(DEVICE_SELECT[6]),
         .RESET(reset),
+        .DISK_READY(DISK_READY),
         .A(ADDR),
         .D_IN(D),
         .D_OUT(DISK_DO),
-        .TRACK1(TRACK1),
-        .TRACK2(TRACK2),
-        .track_addr(DISK_TRACK_ADDR),
-        .D1_ACTIVE(DISK_ACT_1),
-        .D2_ACTIVE(DISK_ACT_2),
-        
-        .ram_write_addr(DISK_RAM_ADDR),
-        .ram_di(DISK_RAM_DI),
-        // ram_do         => DISK_RAM_DO,
-        .ram_we(DISK_RAM_WE),
-
-	.DISK_FD_WRITE_DISK(DISK_FD_WRITE_DISK),
-	.DISK_FD_READ_DISK(DISK_FD_READ_DISK),
-	.DISK_FD_TRACK_ADDR(DISK_FD_TRACK_ADDR),
-	.DISK_FD_DATA_IN(DISK_FD_DATA_IN),
-	.DISK_FD_DATA_OUT(DISK_FD_DATA_OUT)
-
-        
+    .D1_ACTIVE(D1_ACTIVE),
+    .D2_ACTIVE(D2_ACTIVE),
+    //-- track buffer interface for disk 1  -- TODO
+    .TRACK1(TRACK1),
+    .TRACK1_ADDR(TRACK1_ADDR),
+    .TRACK1_DO(TRACK1_DO),
+    .TRACK1_DI(TRACK1_DI),
+    .TRACK1_WE(TRACK1_WE),
+    .TRACK1_BUSY(TRACK1_BUSY),
+    //-- track buffer interface for disk 2  -- TODO
+    .TRACK2(TRACK2),
+    .TRACK2_ADDR(TRACK2_ADDR),
+    .TRACK2_DO(TRACK2_DO),
+    .TRACK2_DI(TRACK2_DI),
+    .TRACK2_WE(TRACK2_WE),
+    .TRACK2_BUSY(TRACK2_BUSY)
     );
-    
-   /*
-   wire [7:0] floppy_data;
-    gfloppy floppy(
-	    .RESET_N(~reset),
-	    .PH_2(PHASE_ZERO),
-	    .ADDRESS(ADDR),
-	    .DATA_OUT(D),
-	    .FLOPPY_DATA(DISK_DO),
-	    .FLOPPY_DATA_IN(FLOPPY_DATA_IN),
-	    .FLOPPY_ADDRESS(FLOPPY_ADDRESS)
-    );
-*/
 
     
-    assign DISK_RAM_DO = {8{1'b0}};
     
 `ifdef NO
     hdd hdd(

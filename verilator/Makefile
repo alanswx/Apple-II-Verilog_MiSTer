@@ -67,6 +67,8 @@ V_SRC = \
 		$(RTL)/mockingboard/via6522.v  \
 		$(RTL)/mockingboard/YM2149.sv  \
 		$(RTL)/disk_ii.v  \
+		$(RTL)/drive_ii.v  \
+		$(RTL)/floppy_track.sv  \
 		$(RTL)/clock_card.v  \
 		$(RTL)/apple2_top.v  \
 		$(RTL)/apple2.v  \
