@@ -38,3 +38,14 @@ c5_pin_model_dump.txt
 *_netlist
 *.cdf
 imgui.ini
+
+# verilator build + local test media
+verilator/obj_dir/
+*.hdv
+*.nib
+*.dsk
+*.po
+*.do
+*.woz
+rtl/roms/*.bin
+rtl/roms/*.labels
