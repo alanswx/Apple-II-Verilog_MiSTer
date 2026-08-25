@@ -14,6 +14,10 @@
 #include <tchar.h>
 #endif
 
+extern uint32_t* output_ptr;
+extern int output_width;
+extern int output_height;
+
 struct SimVideo {
 public:
 

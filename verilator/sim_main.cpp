@@ -25,7 +25,29 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <cstring>
+#include <cstdlib>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "sim/stb_image_write.h"
 using namespace std;
+
+// Batch / automation control
+// --------------------------
+static std::vector<int> screenshot_frames;
+static std::string      screenshot_name_override;
+static int              stop_at_frame = -1;
+static bool             stop_at_frame_enabled = false;
+static std::string      floppy_image  = "floppy.nib";
+static std::string      floppy2_image = "";
+static std::string      hdd_image     = "";
+static bool             fixed_time = false;
+static time_t           fixed_time_epoch = 527169600; // 1986-09-15 00:00:00 UTC
+static bool             batch_verbose = true;
 
 // Simulation control
 // ------------------
@@ -117,10 +139,16 @@ void send_clock() {
 	
 	time_t t;
 
-	time(&t);
+	if (fixed_time)
+		t = fixed_time_epoch;   // deterministic RTC, for reproducible screenshots
+	else
+		time(&t);
 
 	struct tm tm;
-        localtime_r(&t,&tm);
+	if (fixed_time)
+		gmtime_r(&t, &tm);      // avoid host timezone leaking into a fixed run
+	else
+		localtime_r(&t, &tm);
 
 	
 	rtc[0] = (tm.tm_sec % 10) | ((tm.tm_sec / 10) << 4);
@@ -223,7 +251,140 @@ unsigned char mouse_y = 0;
 
 char spinner_toggle = 0;
 
+
+// ---------------------------------------------------------------------------
+// Screenshot / batch automation
+// ---------------------------------------------------------------------------
+
+// Reads the framebuffer that SimVideo::Clock() fills, so this works identically
+// whether or not a window is open. Pixel format is 0xFF000000 | B<<16 | G<<8 | R.
+static void save_screenshot(int frame_number)
+{
+	if (!output_ptr) {
+		printf("Screenshot: output_ptr is null, nothing to save\n");
+		return;
+	}
+
+	int w = video.output_width;
+	int h = video.output_height;
+	if (w <= 0 || h <= 0) {
+		printf("Screenshot: video is %dx%d, nothing to save\n", w, h);
+		return;
+	}
+
+	char filename[512];
+	if (!screenshot_name_override.empty())
+		snprintf(filename, sizeof(filename), "%s", screenshot_name_override.c_str());
+	else
+		snprintf(filename, sizeof(filename), "screenshot_frame_%04d.png", frame_number);
+
+	uint8_t* rgb = (uint8_t*)malloc((size_t)w * h * 3);
+	if (!rgb) {
+		printf("Screenshot: out of memory\n");
+		return;
+	}
+
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++) {
+			uint32_t pixel = output_ptr[y * w + x];
+			int d = (y * w + x) * 3;
+			rgb[d + 0] = (pixel >> 0) & 0xFF;  // R
+			rgb[d + 1] = (pixel >> 8) & 0xFF;  // G
+			rgb[d + 2] = (pixel >> 16) & 0xFF; // B
+		}
+	}
+
+	int ok = stbi_write_png(filename, w, h, 3, rgb, w * 3);
+	free(rgb);
+
+	printf(ok ? "Screenshot saved: %s (%dx%d)\n" : "Screenshot FAILED: %s (%dx%d)\n",
+	       filename, w, h);
+	fflush(stdout);
+}
+
+// Called once per new video frame from whichever run loop is active.
+static void on_new_frame(int frame)
+{
+	if (batch_verbose && (!screenshot_frames.empty() || stop_at_frame_enabled))
+		printf("Frame: %d\n", frame);
+
+	if (std::find(screenshot_frames.begin(), screenshot_frames.end(), frame)
+	    != screenshot_frames.end())
+		save_screenshot(frame);
+
+	if (stop_at_frame_enabled && frame >= stop_at_frame) {
+		printf("Reached frame %d, stopping.\n", frame);
+		fflush(stdout);
+		exit(0);
+	}
+}
+
+static void show_help(const char* argv0)
+{
+	printf("Usage: %s [options]\n\n", argv0);
+	printf("  Run from the verilator/ directory - the ROMs are loaded by\n");
+	printf("  $readmemh using paths relative to it.\n\n");
+	printf("Disks:\n");
+	printf("  --floppy <file.nib>     Drive 1 (slot 6 d1). Default: floppy.nib\n");
+	printf("  --floppy2 <file.nib>    Drive 2 (slot 6 d2)\n");
+	printf("  --hdd <file.hdv>        Hard disk (slot 7). Also --disk\n");
+	printf("  --no-floppy             Start with no floppy mounted\n\n");
+	printf("Automation:\n");
+	printf("  --screenshot N[,N..]    Save a PNG at these frame numbers\n");
+	printf("  --screenshot-name FILE  Override the screenshot filename\n");
+	printf("  --stop-at-frame N       Exit once frame N is reached\n");
+	printf("  --fixed-time [epoch]    Freeze the RTC for reproducible runs\n");
+	printf("  --quiet                 Suppress per-frame progress lines\n");
+	printf("  -h, --help              This message\n\n");
+	printf("Example:\n");
+	printf("  %s --floppy floppy.nib --screenshot 300 --stop-at-frame 300\n", argv0);
+}
+
+static void parse_args(int argc, char** argv)
+{
+	for (int i = 1; i < argc; i++) {
+		std::string a = argv[i];
+		auto next = [&](const char* what) -> std::string {
+			if (i + 1 >= argc) {
+				printf("Error: %s needs an argument\n", what);
+				exit(1);
+			}
+			return std::string(argv[++i]);
+		};
+
+		if (a == "-h" || a == "--help") { show_help(argv[0]); exit(0); }
+		else if (a == "--floppy")        floppy_image  = next("--floppy");
+		else if (a == "--floppy2")       floppy2_image = next("--floppy2");
+		else if (a == "--hdd" || a == "--disk") hdd_image = next(a.c_str());
+		else if (a == "--no-floppy")     floppy_image.clear();
+		else if (a == "--screenshot-name") screenshot_name_override = next("--screenshot-name");
+		else if (a == "--stop-at-frame") {
+			stop_at_frame = atoi(next("--stop-at-frame").c_str());
+			stop_at_frame_enabled = true;
+		}
+		else if (a == "--quiet")         batch_verbose = false;
+		else if (a == "--fixed-time") {
+			fixed_time = true;
+			if (i + 1 < argc && argv[i + 1][0] != '-')
+				fixed_time_epoch = (time_t)atol(argv[++i]);
+		}
+		else if (a == "--screenshot") {
+			std::stringstream ss(next("--screenshot"));
+			std::string tok;
+			while (std::getline(ss, tok, ',')) {
+				if (!tok.empty()) screenshot_frames.push_back(atoi(tok.c_str()));
+			}
+		}
+		else if (!a.empty() && a[0] == '-') {
+			// Leave unknown dash-args to Verilated::commandArgs (e.g. +verilator+...)
+			continue;
+		}
+	}
+}
+
 int main(int argc, char** argv, char** env) {
+
+	parse_args(argc, argv);
 
 	// Create core and initialise
 	top = new Vemu();
@@ -304,10 +465,10 @@ int main(int argc, char** argv, char** env) {
 	if (video.Initialise(windowTitle) == 1) { return 1; }
 
 
-        //bus.QueueDownload("floppy.nib",1,0);
-	blockdevice.MountDisk("floppy.nib",0);
-	//blockdevice.MountDisk("floppy2.nib",2);
-	//blockdevice.MountDisk("hd.hdv",1);
+	// Block device slots: 0 = floppy drive 1, 1 = hard disk, 2 = floppy drive 2
+	if (!floppy_image.empty())  blockdevice.MountDisk((char*)floppy_image.c_str(), 0);
+	if (!hdd_image.empty())     blockdevice.MountDisk((char*)hdd_image.c_str(), 1);
+	if (!floppy2_image.empty()) blockdevice.MountDisk((char*)floppy2_image.c_str(), 2);
 
 #ifdef WIN32
 	MSG msg;
@@ -432,6 +593,15 @@ int main(int argc, char** argv, char** env) {
 		ImGui::SliderInt("Rotate", &video.output_rotate, -1, 1); ImGui::SameLine();
 		ImGui::Checkbox("Flip V", &video.output_vflip);
 		ImGui::Text("main_time: %ld frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
+
+		// Batch automation: fire once per new frame
+		{
+			static int last_seen_frame = -1;
+			if (video.count_frame != last_seen_frame) {
+				last_seen_frame = video.count_frame;
+				on_new_frame(video.count_frame);
+			}
+		}
 		//ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
 
 		// Draw VGA output

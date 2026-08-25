@@ -49,3 +49,6 @@ verilator/obj_dir/
 *.woz
 rtl/roms/*.bin
 rtl/roms/*.labels
+screenshot_frame_*.png
+verilator/*.png
+verilator/*.txt
