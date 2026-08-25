@@ -49,6 +49,9 @@ static bool             fixed_time = false;
 static time_t           fixed_time_epoch = 527169600; // 1986-09-15 00:00:00 UTC
 static bool             batch_verbose = true;
 
+struct KeyInjection { int frame; std::string keys; };
+static std::vector<KeyInjection> key_injections;
+
 // Simulation control
 // ------------------
 int initialReset = 48;
@@ -253,6 +256,184 @@ char spinner_toggle = 0;
 
 
 // ---------------------------------------------------------------------------
+// Keyboard injection (PS/2 set 2, US layout)
+// ---------------------------------------------------------------------------
+//
+// Reaches the core through the same SimInput queue the interactive path uses,
+// so no RTL change is needed: SimInput::BeforeEval() pops one event every
+// keyEventWait ticks and drives ps2_key[10:0].
+
+struct AsciiToPS2 { unsigned int scancode; bool needs_shift; };
+
+static AsciiToPS2 ascii_to_ps2(char c)
+{
+	AsciiToPS2 r = { 0xFF, false };
+
+	static const unsigned int letters[] = {
+		0x1c, 0x32, 0x21, 0x23, 0x24, 0x2b, 0x34, 0x33,  // a-h
+		0x43, 0x3b, 0x42, 0x4b, 0x3a, 0x31, 0x44, 0x4d,  // i-p
+		0x15, 0x2d, 0x1b, 0x2c, 0x3c, 0x2a, 0x1d, 0x22,  // q-x
+		0x35, 0x1a                                        // y-z
+	};
+	static const unsigned int digits[] = {
+		0x45, 0x16, 0x1e, 0x26, 0x25, 0x2e, 0x36, 0x3d, 0x3e, 0x46
+	};
+
+	if (c >= 'a' && c <= 'z') { r.scancode = letters[c - 'a']; return r; }
+	if (c >= 'A' && c <= 'Z') { r.scancode = letters[c - 'A']; r.needs_shift = true; return r; }
+	if (c >= '0' && c <= '9') { r.scancode = digits[c - '0'];  return r; }
+
+	switch (c) {
+	case ' ':  r.scancode = 0x29; break;
+	case '\n': case '\r': r.scancode = 0x5a; break;   // Return
+	case '\t': r.scancode = 0x0d; break;
+	case '\b': r.scancode = 0x66; break;
+	case 0x1b: r.scancode = 0x76; break;              // Escape
+	case '-':  r.scancode = 0x4e; break;
+	case '=':  r.scancode = 0x55; break;
+	case '[':  r.scancode = 0x54; break;
+	case ']':  r.scancode = 0x5b; break;
+	case '\\': r.scancode = 0x5d; break;
+	case ';':  r.scancode = 0x4c; break;
+	case '\'': r.scancode = 0x52; break;
+	case '`':  r.scancode = 0x0e; break;
+	case ',':  r.scancode = 0x41; break;
+	case '.':  r.scancode = 0x49; break;
+	case '/':  r.scancode = 0x4a; break;
+	case '!':  r.scancode = 0x16; r.needs_shift = true; break;
+	case '@':  r.scancode = 0x1e; r.needs_shift = true; break;
+	case '#':  r.scancode = 0x26; r.needs_shift = true; break;
+	case '$':  r.scancode = 0x25; r.needs_shift = true; break;
+	case '%':  r.scancode = 0x2e; r.needs_shift = true; break;
+	case '^':  r.scancode = 0x36; r.needs_shift = true; break;
+	case '&':  r.scancode = 0x3d; r.needs_shift = true; break;
+	case '*':  r.scancode = 0x3e; r.needs_shift = true; break;
+	case '(':  r.scancode = 0x46; r.needs_shift = true; break;
+	case ')':  r.scancode = 0x45; r.needs_shift = true; break;
+	case '_':  r.scancode = 0x4e; r.needs_shift = true; break;
+	case '+':  r.scancode = 0x55; r.needs_shift = true; break;
+	case '{':  r.scancode = 0x54; r.needs_shift = true; break;
+	case '}':  r.scancode = 0x5b; r.needs_shift = true; break;
+	case '|':  r.scancode = 0x5d; r.needs_shift = true; break;
+	case ':':  r.scancode = 0x4c; r.needs_shift = true; break;
+	case '"':  r.scancode = 0x52; r.needs_shift = true; break;
+	case '~':  r.scancode = 0x0e; r.needs_shift = true; break;
+	case '<':  r.scancode = 0x41; r.needs_shift = true; break;
+	case '>':  r.scancode = 0x49; r.needs_shift = true; break;
+	case '?':  r.scancode = 0x4a; r.needs_shift = true; break;
+	}
+	return r;
+}
+
+// Internal markers produced by the --send-keys escape parser.
+enum {
+	KEYMARK_CTRL  = 0x01,   // next char is sent with Left Ctrl held
+	KEYMARK_UP    = 0x04,
+	KEYMARK_DOWN  = 0x05,
+	KEYMARK_LEFT  = 0x06,
+	KEYMARK_RIGHT = 0x07
+};
+
+static void queue_key_string(const std::string& keys)
+{
+	const unsigned int SHIFT_SC = 0x12;   // Left Shift
+	const unsigned int CTRL_SC  = 0x14;   // Left Ctrl
+
+	for (size_t i = 0; i < keys.size(); i++) {
+		char c = keys[i];
+
+		if (c == KEYMARK_CTRL && i + 1 < keys.size()) {
+			char combo = keys[++i];
+			AsciiToPS2 m = ascii_to_ps2(combo);
+			if (m.scancode == 0xFF) continue;
+			input.keyEvents.push(SimInput_PS2KeyEvent(CTRL_SC, true,  false, CTRL_SC));
+			input.keyEvents.push(SimInput_PS2KeyEvent(m.scancode, true,  false, m.scancode));
+			input.keyEvents.push(SimInput_PS2KeyEvent(m.scancode, false, false, m.scancode));
+			input.keyEvents.push(SimInput_PS2KeyEvent(CTRL_SC, false, false, CTRL_SC));
+			continue;
+		}
+
+		if (c >= KEYMARK_UP && c <= KEYMARK_RIGHT) {
+			unsigned int sc = (c == KEYMARK_UP)   ? 0x75 :
+			                  (c == KEYMARK_DOWN) ? 0x72 :
+			                  (c == KEYMARK_LEFT) ? 0x6b : 0x74;
+			input.keyEvents.push(SimInput_PS2KeyEvent(sc, true,  true, sc));
+			input.keyEvents.push(SimInput_PS2KeyEvent(sc, false, true, sc));
+			continue;
+		}
+
+		AsciiToPS2 m = ascii_to_ps2(c);
+		if (m.scancode == 0xFF) continue;
+
+		if (m.needs_shift)
+			input.keyEvents.push(SimInput_PS2KeyEvent(SHIFT_SC, true, false, SHIFT_SC));
+		input.keyEvents.push(SimInput_PS2KeyEvent(m.scancode, true,  false, m.scancode));
+		input.keyEvents.push(SimInput_PS2KeyEvent(m.scancode, false, false, m.scancode));
+		if (m.needs_shift)
+			input.keyEvents.push(SimInput_PS2KeyEvent(SHIFT_SC, false, false, SHIFT_SC));
+	}
+}
+
+static void process_key_injections(int frame)
+{
+	for (auto it = key_injections.begin(); it != key_injections.end(); ) {
+		if (it->frame == frame) {
+			printf("Injecting keys at frame %d\n", frame);
+			fflush(stdout);
+			queue_key_string(it->keys);
+			it = key_injections.erase(it);
+		} else {
+			++it;
+		}
+	}
+}
+
+// "300:CATALOG\n" -> frame 300, keys "CATALOG<CR>"
+static void parse_send_keys(const std::string& spec)
+{
+	size_t colon = spec.find(':');
+	if (colon == std::string::npos) {
+		printf("Error: --send-keys wants frame:text (got \"%s\")\n", spec.c_str());
+		exit(1);
+	}
+
+	KeyInjection ki;
+	ki.frame = atoi(spec.substr(0, colon).c_str());
+
+	const std::string raw = spec.substr(colon + 1);
+	std::string out;
+	for (size_t i = 0; i < raw.size(); i++) {
+		if (raw[i] != '\\' || i + 1 >= raw.size()) { out += raw[i]; continue; }
+		char e = raw[++i];
+		switch (e) {
+		case 'n': out += '\n'; break;
+		case 'r': out += '\r'; break;
+		case 't': out += '\t'; break;
+		case 'b': out += '\b'; break;
+		case 'e': out += (char)0x1b; break;
+		case '\\': out += '\\'; break;
+		case 'U': out += (char)KEYMARK_UP; break;
+		case 'D': out += (char)KEYMARK_DOWN; break;
+		case 'L': out += (char)KEYMARK_LEFT; break;
+		case 'R': out += (char)KEYMARK_RIGHT; break;
+		case 'c':  // \cC = Ctrl-C
+			if (i + 1 < raw.size()) { out += (char)KEYMARK_CTRL; out += raw[++i]; }
+			break;
+		case 'x': {
+			std::string hex;
+			while (hex.size() < 2 && i + 1 < raw.size() && isxdigit((unsigned char)raw[i + 1]))
+				hex += raw[++i];
+			if (!hex.empty()) out += (char)strtol(hex.c_str(), NULL, 16);
+			break;
+		}
+		default: out += e; break;
+		}
+	}
+	ki.keys = out;
+	key_injections.push_back(ki);
+}
+
+// ---------------------------------------------------------------------------
 // Screenshot / batch automation
 // ---------------------------------------------------------------------------
 
@@ -308,6 +489,8 @@ static void on_new_frame(int frame)
 	if (batch_verbose && (!screenshot_frames.empty() || stop_at_frame_enabled))
 		printf("Frame: %d\n", frame);
 
+	process_key_injections(frame);
+
 	if (std::find(screenshot_frames.begin(), screenshot_frames.end(), frame)
 	    != screenshot_frames.end())
 		save_screenshot(frame);
@@ -334,6 +517,9 @@ static void show_help(const char* argv0)
 	printf("  --screenshot-name FILE  Override the screenshot filename\n");
 	printf("  --stop-at-frame N       Exit once frame N is reached\n");
 	printf("  --fixed-time [epoch]    Freeze the RTC for reproducible runs\n");
+	printf("  --send-keys F:TEXT      Type TEXT at frame F. Repeatable.\n");
+	printf("                          Escapes: \\n \\r \\t \\b \\e \\\\ \\xNN\n");
+	printf("                                   \\cX = Ctrl-X, \\U \\D \\L \\R = arrows\n");
 	printf("  --quiet                 Suppress per-frame progress lines\n");
 	printf("  -h, --help              This message\n\n");
 	printf("Example:\n");
@@ -363,6 +549,7 @@ static void parse_args(int argc, char** argv)
 			stop_at_frame_enabled = true;
 		}
 		else if (a == "--quiet")         batch_verbose = false;
+		else if (a == "--send-keys")     parse_send_keys(next("--send-keys"));
 		else if (a == "--fixed-time") {
 			fixed_time = true;
 			if (i + 1 < argc && argv[i + 1][0] != '-')

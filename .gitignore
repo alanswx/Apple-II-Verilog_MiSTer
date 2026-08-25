@@ -51,4 +51,5 @@ rtl/roms/*.bin
 rtl/roms/*.labels
 screenshot_frame_*.png
 verilator/*.png
+!verilator/regression_images/*.png
 verilator/*.txt
