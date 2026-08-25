@@ -92,17 +92,32 @@ failing the run. A test with no reference image also SKIPs and leaves
 
 ## Known quirks
 
-- **`#` displays as `£`.** The built-in `rtl/roms/video.hex` is a single 4K
-  character ROM that renders `$23` as a pound sign. The published VHDL core
-  has switchable US / LOCAL video ROMs; this one does not, so anything typing
-  `#` (e.g. `PR#7`) looks wrong on screen even though the keystroke is
-  correct.
+- **Video ROM is US, and it is a build-time choice.** The 8K
+  `Apple IIe Video UK-US - Enhanced - 342-0273-A` ROM holds two 4K national
+  sets that differ at exactly two characters, `$23` and `$A3` — `#` in the US
+  set, `£` in the UK set. They are split here into `rtl/roms/video_us.hex`
+  and `video_uk.hex`, and `rtl/video_generator.v` selects one. This core used
+  to hardwire the UK set, so `#` rendered as `£`.
+
+  The published VHDL core instead loads the whole 8K ROM and selects a half at
+  runtime with `ROMSWITCH` (OSD "Video Rom, US / LOCAL", defaulting to US).
+  Porting that is the proper fix; until then, edit the filename in
+  `video_generator.v`.
+
+- **ROMs are duplicated.** There are two trees: `../rtl/roms/` for synthesis
+  and `verilator/rtl/roms/` for the sim, because `$readmemh` resolves relative
+  to the working directory. A ROM added to one must be copied to the other.
 - **Screenshots carry a margin.** `VGA_WIDTH`/`VGA_HEIGHT` are 320×240
   (`sim_main.cpp`) while the core's active area is about 282 pixels wide, and
   `sim.v` samples `ce_pix` at half rate. Raising the width and sampling every
   clock would recover horizontal resolution and artifact colour.
 - **`hd.hdv` bootability is unverified** — `PR#7` appears to hang rather than
   boot, so there is no hard-disk test in the suite yet.
+- **A flashing cursor sits in most screenshots.** It is deterministic, so
+  exact diffs still work, but a test whose frame lands mid-blink will differ by
+  a single character cell if timing shifts at all. If a test proves fragile,
+  move its frame rather than loosening the comparison.
+
 - **The top level is duplicated.** `sim.v` re-implements the body of
   `../Apple-II.sv` (same RAM arrays, same `apple2_top` instantiation, same
   floppy/HDD plumbing). Any top-level change has to be made in both places.

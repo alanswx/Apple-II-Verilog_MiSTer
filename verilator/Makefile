@@ -82,11 +82,23 @@ C_SRC = \
 	sim/sim_bus.cpp sim/sim_blkdevice.cpp sim/sim_clock.cpp sim/sim_console.cpp sim/sim_video.cpp sim/sim_console.cpp sim/sim_input.cpp  sim/sim_audio.cpp \
 	sim/imgui/imgui_impl_sdl.cpp sim/imgui/imgui_impl_opengl2.cpp sim/imgui/imgui_draw.cpp sim/imgui/imgui_widgets.cpp sim/imgui/imgui_tables.cpp sim/imgui/imgui.cpp sim/imgui/ImGuiFileDialog.cpp sim/imgui/implot.cpp sim/imgui/implot_items.cpp
 
+# Verilator pulls in additional modules from -I$(RTL) that are not listed in
+# V_SRC (video_generator.v, for one). Without a dependency on them, editing
+# such a file leaves make with "Nothing to be done" and you silently run a
+# stale build. Depend on every RTL source so any change re-verilates.
+V_DEPS = $(wildcard $(RTL)/*.v $(RTL)/*.sv $(RTL)/*/*.v $(RTL)/*/*.sv) \
+         $(wildcard $(RTL)/roms/*.hex)
+
 VOUT = obj_dir/Vemu.cpp
 
 all: $(EXE)
 
-$(VOUT): $(V_SRC)  Makefile
+# Remove the previously generated model first. Verilator splits its output over
+# several Vemu*.cpp files, and re-running it over a partially stale obj_dir has
+# been observed to leave old RTL (notably an old $readmemh ROM path) baked into
+# the binary. Regenerating from scratch is slower but always correct.
+$(VOUT): $(V_SRC) $(V_DEPS) Makefile
+	rm -f obj_dir/Vemu*.cpp obj_dir/Vemu*.h obj_dir/Vemu*.mk obj_dir/Vemu*.o obj_dir/Vemu*.a
 	$V -cc $(V_OPT) -LDFLAGS "$(LDFLAGS) " -exe  --Mdir ./obj_dir $(V_DEFINE) $(V_INC) $(TOP) -CFLAGS $(CFLAGS) $(V_SRC) $(C_SRC)
 
 $(EXE): $(VOUT) $(C_SRC)

@@ -62,7 +62,7 @@ reg [7:0] video_shiftreg;
    .q(video_rom_out)
   );
   */
-   rom #(8,12,"rtl/roms/video.hex") videorom (
+   rom #(8,12,"rtl/roms/video_us.hex") videorom (
            .clock(CLK_14M),
            .ce(1'b1),
            .a(video_rom_addr),
