@@ -1,4 +1,5 @@
 #include <verilated.h>
+#include <time.h>
 #include "Vemu.h"
 
 #include "imgui.h"
@@ -10,6 +11,7 @@
 #else
 #define WIN32
 #include <dinput.h>
+#define localtime_r(T,Tm) (localtime_s(Tm,T) ? NULL : Tm)
 #endif
 
 #include "sim_console.h"
