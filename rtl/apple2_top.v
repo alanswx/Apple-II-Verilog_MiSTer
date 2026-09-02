@@ -44,25 +44,18 @@ module apple2_top(
     joy_an,
     mb_enabled,
 
-    	TRACK1,
-	TRACK1_ADDR,
-	TRACK1_DI,
-	TRACK1_DO,
-	TRACK1_WE,
-	TRACK1_BUSY,
-	TRACK2,
-	TRACK2_ADDR,
-	TRACK2_DI,
-	TRACK2_DO,
-	TRACK2_WE,
-	TRACK2_BUSY,
+	FD_RESET,
+	FD_SD_LBA0, FD_SD_RD0, FD_SD_WR0, FD_SD_ACK0, FD_SD_BUFF_DIN0,
+	FD_SD_LBA1, FD_SD_RD1, FD_SD_WR1, FD_SD_ACK1, FD_SD_BUFF_DIN1,
+	FD_SD_BUFF_ADDR, FD_SD_BUFF_DOUT, FD_SD_BUFF_WR,
+	FD_IMG_MOUNTED0, FD_IMG_MOUNTED1, FD_IMG_READONLY, FD_IMG_SIZE,
+	D1_WP, D2_WP,
 
 	D1_ACTIVE,
 	D2_ACTIVE,
 
 	DISK_ACT,
 
-	DISK_READY,
 
 
     HDD_SECTOR,
@@ -117,25 +110,33 @@ module apple2_top(
     // mocking board
     input         mb_enabled;
    
-output [5:0]	TRACK1;
-output [12:0] TRACK1_ADDR;
-output [7:0] 	TRACK1_DI;
-input [7:0]	TRACK1_DO;
-output	TRACK1_WE;
-input	TRACK1_BUSY;
-output [5:0]	TRACK2;
-output [12:0] 	TRACK2_ADDR;
-output [7:0] 	TRACK2_DI;
-input [7:0] 	TRACK2_DO;
-output	TRACK2_WE;
-input	TRACK2_BUSY;
+// Disk II (WOZ engine, rtl/disk_ii_woz.sv): SD block interface per drive
+input		FD_RESET;
+output [31:0]	FD_SD_LBA0;
+output		FD_SD_RD0;
+output		FD_SD_WR0;
+input		FD_SD_ACK0;
+output [7:0]	FD_SD_BUFF_DIN0;
+output [31:0]	FD_SD_LBA1;
+output		FD_SD_RD1;
+output		FD_SD_WR1;
+input		FD_SD_ACK1;
+output [7:0]	FD_SD_BUFF_DIN1;
+input [8:0]	FD_SD_BUFF_ADDR;
+input [7:0]	FD_SD_BUFF_DOUT;
+input		FD_SD_BUFF_WR;
+input		FD_IMG_MOUNTED0;
+input		FD_IMG_MOUNTED1;
+input		FD_IMG_READONLY;
+input [63:0]	FD_IMG_SIZE;
+input		D1_WP;
+input		D2_WP;
 
-inout	D1_ACTIVE;
-inout	D2_ACTIVE;
+output	D1_ACTIVE;
+output	D2_ACTIVE;
 
 output	DISK_ACT;
 
-input[1:0]	DISK_READY;
 
     
     // HDD control
@@ -211,6 +212,8 @@ input[1:0]	DISK_READY;
     wire [7:0]    PSG_DO;
     wire [7:0]    HDD_DO;
     wire [7:0]    CLOCK_DO;
+    wire          CLOCK_OE;
+    wire          NSC_CS;
     wire [7:0]    SSC_DO;
     wire          SSC_ROM_EN;
     wire          cpu_we;
@@ -324,7 +327,7 @@ input[1:0]	DISK_READY;
     assign ram_di = (reset_cold == 1'b0) ? D : 8'b00000000;
    
 
-    assign PD = //(IO_SELECT[1] == 1'b1 | DEVICE_SELECT[1] == 1'b1) ? CLOCK_DO : 
+    assign PD = CLOCK_OE ? CLOCK_DO :
                 (IO_SELECT[7] == 1'b1 | DEVICE_SELECT[7] == 1'b1) ? HDD_DO : 
                 (IO_SELECT[6] == 1'b1 | DEVICE_SELECT[6] == 1'b1) ? DISK_DO : 
                 //(IO_SELECT[2] == 1'b1 | DEVICE_SELECT[2] == 1'b1 | SSC_ROM_EN == 1'b1) ? SSC_DO : 		// AJS turn on port
@@ -396,33 +399,30 @@ input[1:0]	DISK_READY;
    
     assign DISK_ACT = ~(D1_ACTIVE | D2_ACTIVE);
 
-  disk_ii disk_ii (
+  disk_ii_woz disk_ii (
         .CLK_14M(CLK_14M),
-        .CLK_2M(CLK_2M),
+        .RESET(reset),
+        .DD_RESET(FD_RESET),
         .PHASE_ZERO(PHASE_ZERO),
         .IO_SELECT(IO_SELECT[6]),
         .DEVICE_SELECT(DEVICE_SELECT[6]),
-        .RESET(reset),
-        .DISK_READY(DISK_READY),
+        .WE(cpu_we),
         .A(ADDR),
         .D_IN(D),
         .D_OUT(DISK_DO),
-    .D1_ACTIVE(D1_ACTIVE),
-    .D2_ACTIVE(D2_ACTIVE),
-    //-- track buffer interface for disk 1  -- TODO
-    .TRACK1(TRACK1),
-    .TRACK1_ADDR(TRACK1_ADDR),
-    .TRACK1_DO(TRACK1_DO),
-    .TRACK1_DI(TRACK1_DI),
-    .TRACK1_WE(TRACK1_WE),
-    .TRACK1_BUSY(TRACK1_BUSY),
-    //-- track buffer interface for disk 2  -- TODO
-    .TRACK2(TRACK2),
-    .TRACK2_ADDR(TRACK2_ADDR),
-    .TRACK2_DO(TRACK2_DO),
-    .TRACK2_DI(TRACK2_DI),
-    .TRACK2_WE(TRACK2_WE),
-    .TRACK2_BUSY(TRACK2_BUSY)
+        .D1_ACTIVE(D1_ACTIVE),
+        .D2_ACTIVE(D2_ACTIVE),
+        .D1_WP(D1_WP),
+        .D2_WP(D2_WP),
+        .SD_LBA0(FD_SD_LBA0), .SD_RD0(FD_SD_RD0), .SD_WR0(FD_SD_WR0), .SD_ACK0(FD_SD_ACK0), .SD_BUFF_DIN0(FD_SD_BUFF_DIN0),
+        .SD_LBA1(FD_SD_LBA1), .SD_RD1(FD_SD_RD1), .SD_WR1(FD_SD_WR1), .SD_ACK1(FD_SD_ACK1), .SD_BUFF_DIN1(FD_SD_BUFF_DIN1),
+        .SD_BUFF_ADDR(FD_SD_BUFF_ADDR),
+        .SD_BUFF_DOUT(FD_SD_BUFF_DOUT),
+        .SD_BUFF_WR(FD_SD_BUFF_WR),
+        .IMG_MOUNTED0(FD_IMG_MOUNTED0),
+        .IMG_MOUNTED1(FD_IMG_MOUNTED1),
+        .IMG_READONLY(FD_IMG_READONLY),
+        .IMG_SIZE(FD_IMG_SIZE)
     );
 
     
@@ -492,21 +492,29 @@ input[1:0]	DISK_READY;
         .IRQ_N(ssc_irq_n)
      );
       
-      clock_card clock(
-        .CLK_14M(CLK_14M), 
-        .CLK_2M(CLK_2M), 
-        .PH_2(PHASE_ZERO), 
-        .IO_SELECT_N(~IO_SELECT[1]),
-        .DEVICE_SELECT_N(~DEVICE_SELECT[1]),
-        .IO_STROBE_N(~IO_STROBE), 
-        .ADDRESS(ADDR), 
-        .RW_N(~cpu_we), 
-        .RESET(reset), 
-        .DATA_IN(D), 
-        .DATA_OUT(CLOCK_DO), 
-        .ROM_EN(CLOCK_ROM_EN), 
-        .IRQ_N(),
-	.RTC(RTC)
+      // One pulse per Apple bus cycle, for the no-slot clock.
+      reg  phase_zero_d;
+      always @(posedge CLK_14M) phase_zero_d <= PHASE_ZERO;
+      wire PHASE_ZERO_R = PHASE_ZERO & ~phase_zero_d;
+
+      // No-Slot Clock (DS1216E). Hides under peripheral ROM space and stays
+      // invisible until it sees its 64-bit unlock pattern, so it needs no slot.
+      // Watching every slot ROM page plus the $C800 window gives the stock
+      // drivers the best chance of finding it wherever they probe.
+      assign NSC_CS = IO_SELECT[1] | IO_SELECT[2] | IO_SELECT[3] | IO_SELECT[4] |
+                      IO_SELECT[5] | IO_SELECT[6] | IO_SELECT[7] | IO_STROBE;
+
+      no_slot_clock #(.CLK_FREQ(14318181)) clock(
+        .clk(CLK_14M),
+        .reset(reset),
+        .enable(1'b1),
+        .cs(NSC_CS),
+        .addr(ADDR),
+        .rw(~cpu_we),
+        .cycle_en(PHASE_ZERO_R),
+        .RTC(RTC),
+        .data_en(CLOCK_OE),
+        .data_out(CLOCK_DO)
      );
       
      `endif

@@ -66,10 +66,12 @@ V_SRC = \
 		$(RTL)/mockingboard/mockingboard.v  \
 		$(RTL)/mockingboard/via6522.v  \
 		$(RTL)/mockingboard/YM2149.sv  \
-		$(RTL)/disk_ii.v  \
-		$(RTL)/drive_ii.v  \
-		$(RTL)/floppy_track.sv  \
-		$(RTL)/clock_card.v  \
+		$(RTL)/disk_ii_woz.sv  \
+		$(RTL)/disk_ii_rom.v  \
+		$(RTL)/flux_drive.v  \
+		$(RTL)/woz_floppy_controller.sv  \
+		$(RTL)/woz_bram.sv  \
+		$(RTL)/no_slot_clock.v  \
 		$(RTL)/apple2_top.v  \
 		$(RTL)/apple2.v  \
 		$(RTL)/gfloppy.v  \

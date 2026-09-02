@@ -1,10 +1,12 @@
+#include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <queue>
 #include <string>
 
 #include "sim_blkdevice.h"
 #include "sim_console.h"
-#include "verilated_heavy.h"
+#include "verilated.h"
 
 #ifndef _MSC_VER
 #else
@@ -36,19 +38,58 @@ QData* img_size=NULL;
 
 
 void SimBlockDevice::MountDisk( std::string file, int index) {
+	bool was_mounted = disk[index].is_open();
+	// Close existing disk if already mounted
+	if (was_mounted) {
+		printf("BLKDEV: Closing existing disk %d before re-mount\n", index);
+		disk[index].close();
+	}
 	disk[index].open(file.c_str(), std::ios::out | std::ios::in | std::ios::binary | std::ios::ate);
         if (disk[index]) {
-		fprintf(stderr,"we are here\n");
-           // we shouldn't do the actual mount here..
-           disk_size[index]= disk[index].tellg();
-	//fprintf(stderr,"mount size %ld\n",disk_size[index]);
+           long int new_size = disk[index].tellg();
            disk[index].seekg(0);
-           mountQueue[index]=1;
-           printf("disk %d inserted (%s)\n",index,file.c_str());
+           // Store basename for UI display
+           std::string basename = file;
+           size_t slash = file.find_last_of("/\\");
+           if (slash != std::string::npos)
+               basename = file.substr(slash + 1);
+           disk_name[index] = basename;
+           printf("BLKDEV: disk %d inserted (%s) size=%ld bytes\n", index, file.c_str(), new_size);
+           if (index == 0) {
+               // NIB floppy format check: 232960 = 35 tracks × 6656 bytes/track
+               if (new_size == 232960) {
+                   printf("BLKDEV: Detected 5.25\" NIB format (35 tracks × 6656 bytes)\n");
+               } else {
+                   printf("BLKDEV: WARNING - Floppy size %ld doesn't match expected NIB size 232960\n", new_size);
+               }
+           }
+           // MiSTer behavior: single mount pulse with new size, whether fresh or swap
+           // For swap, Verilog side handles the rescan via 1-cycle glitch on woz_ctrl_mount
+           disk_size[index] = new_size;
+           mountQueue[index] = 1;
+           header_size[index] = 0;
+           if (was_mounted)
+               printf("BLKDEV: Disk swap for drive %d (single pulse, size=%ld)\n", index, new_size);
+           else
+               printf("BLKDEV: Fresh mount for drive %d (size=%ld)\n", index, new_size);
         }else {
-		fprintf(stderr,"some kind of error: %s\n",file.c_str());
+		fprintf(stderr,"BLKDEV ERROR: Failed to open: %s\n",file.c_str());
 	}
 
+}
+
+void SimBlockDevice::EjectDisk(int index) {
+	if (disk[index].is_open()) {
+		disk[index].close();
+	}
+	disk_size[index] = 0;
+	mountQueue[index] = 1;  // Triggers mount pulse with size=0, Verilog sees unmount
+	disk_name[index].clear();
+	printf("BLKDEV: disk %d ejected\n", index);
+}
+
+bool SimBlockDevice::IsMounted(int index) {
+	return disk[index].is_open();
 }
 
 
@@ -77,7 +118,8 @@ void SimBlockDevice::BeforeEval(int cycles)
          //printf("cycles %x reading %X : %X ack %x\n",cycles,*sd_buff_addr,*sd_buff_dout,*sd_ack );
       } else if(writing && *sd_buff_addr != bytecnt && (*sd_buff_addr< kBLKSZ)) {
       //} else if(writing && (bytecnt < kBLKSZ)) {
-  	//printf("writing disk %i at sd_buff_addr %x data %x ack %x\n",i,*sd_buff_addr,*sd_buff_din[i],*sd_ack);
+        if (i == 5 && bytecnt < 8)
+            printf("WOZ_SAVE_DMA[%d]: addr=%d bytecnt=%d data=%02X\n", i, *sd_buff_addr, bytecnt, *(sd_buff_din[i]));
         disk[i].put(*(sd_buff_din[i]));
         *sd_buff_addr = bytecnt;
       } else {
@@ -86,7 +128,10 @@ void SimBlockDevice::BeforeEval(int cycles)
 	  if (writing) {
 		  if (bytecnt>=kBLKSZ) {
 			  writing=0;
-			  //printf("writing stopped: bytecnt %x sd_buff_addr %x \n",bytecnt,*sd_buff_addr);
+			  if (i == 4 || i == 5) {
+			      printf("WOZ_DMA[%d]: Block write complete (bytecnt=%d)\n", i, bytecnt);
+			      disk[i].flush();  // Ensure data reaches disk (survives kill)
+			  }
 		  }
 		  if (bytecnt<kBLKSZ)
 		  	bytecnt++;
@@ -104,40 +149,100 @@ void SimBlockDevice::BeforeEval(int cycles)
 
     // issue a mount if we aren't doing anything, and the img_mounted has no bits set
     if (!reading && !writing && mountQueue[i] && !*img_mounted) {
-fprintf(stderr,"mounting.. %d\n",i);
+            // 2IMG/.2mg parse: read the 64-byte header if the "2IMG" magic is present
+            // and use its data_offset/data_length fields directly. This correctly
+            // handles images with trailing comment or creator chunks after the data.
+            // Layout (all little-endian): bytes 0-3 magic, 8-9 header length (=64),
+            // 24-27 data_offset, 28-31 data_length.
+            if (disk_size[i] >= 64) {
+                    unsigned char hdr[64];
+                    disk[i].seekg(0);
+                    disk[i].read((char *)hdr, 64);
+                    if (disk[i] && !memcmp(hdr, "2IMG", 4)) {
+                            uint16_t hdr_len    = (uint16_t)hdr[8]  | ((uint16_t)hdr[9]  << 8);
+                            uint32_t data_off   = (uint32_t)hdr[24] | ((uint32_t)hdr[25] << 8)
+                                                | ((uint32_t)hdr[26] << 16) | ((uint32_t)hdr[27] << 24);
+                            uint32_t data_len   = (uint32_t)hdr[28] | ((uint32_t)hdr[29] << 8)
+                                                | ((uint32_t)hdr[30] << 16) | ((uint32_t)hdr[31] << 24);
+                            uint32_t block_cnt  = (uint32_t)hdr[20] | ((uint32_t)hdr[21] << 8)
+                                                | ((uint32_t)hdr[22] << 16) | ((uint32_t)hdr[23] << 24);
+                            if (hdr_len != 64 || data_off < 64 ||
+                                (long)(data_off + data_len) > disk_size[i]) {
+                                    fprintf(stderr, "2IMG header looks malformed (hdr_len=%u "
+                                                    "data_off=%u data_len=%u file=%ld); "
+                                                    "skipping header adjustment\n",
+                                                    hdr_len, data_off, data_len,
+                                                    disk_size[i]);
+                            } else {
+                                    // data_len can be 0 for ProDOS images -- derive from block_count
+                                    if (data_len == 0) data_len = block_cnt * kBLKSZ;
+                                    fprintf(stderr, "Detected \"2IMG\" (data_off=%u data_len=%u)\n",
+                                                    data_off, data_len);
+                                    header_size[i] = data_off;
+                                    disk_size[i]   = data_len;
+                            }
+                    }
+            }
+           printf("BLKDEV: Mounting drive %d, img_size=%ld, header_offset=%ld\n", i, disk_size[i], header_size[i]);
+           if (i == 0) {
+               printf("FLOPPY: Mount signal sent - setting img_mounted[0], expecting floppy_track to detect mount\n");
+           }
            mountQueue[i]=0;
            *img_size = disk_size[i];
 	   *img_readonly=0;
-fprintf(stderr,"img_size .. %ld\n",*img_size);
-           disk[i].seekg(0);
+           disk[i].seekg(header_size[i]);
            bitset(*img_mounted,i);
            ack_delay=1200;
-    } else if (ack_delay==1 && bitcheck(*img_mounted,i) ) {
-fprintf(stderr,"mounting flag cleared  %d\n",i);
+    } else if (ack_delay==1 && bitcheck(*img_mounted,i)) {
+           // Clear mount flag after ack_delay expires - allows next queued mount to proceed
+           // Verilog side latches state on rising edge (WOZ) or level (HDD), so pulse is sufficient
+           printf("BLKDEV: Mount flag cleared for drive %d\n", i);
         bitclear(*img_mounted,i) ;
-        //*img_size = 0;
     } else { if (!reading && !writing && ack_delay>0) ack_delay--; }
 
     // start reading when sd_rd pulses high
     if ((current_disk==-1 || current_disk==i) && (bitcheck(*sd_rd,i) || bitcheck(*sd_wr,i) )) {
        // set current disk here..
-//fprintf(stderr,"setting current disk %d %x ack_delay %x\n",i,*sd_rd,ack_delay);
        current_disk=i;
       if (!ack_delay) {
         int lba = *(sd_lba[i]);
         if (bitcheck(*sd_rd,i)) {
         	reading = true;
-	} 
+	}
         if (bitcheck(*sd_wr,i)) {
         	writing = true;
-	} 
+	}
 
         disk[i].clear();
-        disk[i].seekg((lba) * kBLKSZ);
-        printf("seek %06X lba: (%x) (%d,%d) drive %d reading %d writing %d ack %x\n", (lba) * kBLKSZ,lba,lba,kBLKSZ,i,reading,writing,*sd_ack);
+        if (writing) {
+            disk[i].seekp((lba) * kBLKSZ + header_size[i]);
+        } else {
+            disk[i].seekg((lba) * kBLKSZ + header_size[i]);
+        }
+        // Debug output for floppy (index 0) - show track calculation
+        if (i == 0) {
+            int track = lba / 13;  // 13 sectors per track
+            int sector = lba % 13;
+            printf("FLOPPY DMA: LBA=%d (track=%d sector=%d) seek=%06X reading=%d writing=%d\n",
+                   lba, track, sector, (lba) * kBLKSZ + header_size[i], reading, writing);
+        }
+        if (i == 4 || i == 5) {
+            printf("WOZ_DMA[%d]: LBA=%d seek=0x%06lX %s\n",
+                   i, lba, (long)((lba) * kBLKSZ + header_size[i]),
+                   writing ? "WRITE" : "READ");
+        }
         bytecnt = 0;
         *sd_buff_addr = 0;
-        ack_delay = 1200;
+        // WOZ drives (index 4=5.25", index 5=3.5") use minimal ack_delay for instant track loading
+        // This simulates having all track data pre-cached in memory
+        // Using 2 cycles minimum to allow the protocol handshake to work
+        // WOZ_ACK_DELAY (env) models realistic HW SD track-load latency for WOZ drives,
+        // so a half-track re-seek's reload takes real time (as on silicon) instead of being
+        // instant. Used to investigate copy-protection timing (see
+        // doc/loderunner-woz-hw-bisect-handoff.md). Default 2 keeps regression fast/identical.
+        static int woz_ack = -1;
+        if (woz_ack < 0) { const char* e = getenv("WOZ_ACK_DELAY"); woz_ack = e ? atoi(e) : 2; }
+        ack_delay = (i == 4 || i == 5) ? woz_ack : 1200;
       }
     }
 
