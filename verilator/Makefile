@@ -71,6 +71,7 @@ V_SRC = \
 		$(RTL)/flux_drive.v  \
 		$(RTL)/woz_floppy_controller.sv  \
 		$(RTL)/woz_bram.sv  \
+		$(RTL)/woz_cell525.sv  \
 		$(RTL)/no_slot_clock.v  \
 		$(RTL)/apple2_top.v  \
 		$(RTL)/apple2.v  \
